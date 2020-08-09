@@ -1,7 +1,7 @@
 import * as THREE from 'three'
 import vertexShader from './shader.vert'
 import fragmentShader from './shader.frag'
-
+import { N3D, sphereRandom, evenSpherePoints } from './util'
 /*
 v' = -g-a(v-w)
 v=w+(k*exp(-a*t)-g)/a
@@ -33,17 +33,14 @@ function sample<T>(arr: T[]): T {
   return arr[Math.floor(Math.random() * arr.length)]
 }
 const geometries = [...Array(32)].map(() => generateGeometry(64))
-const uniforms = {
-  time: { value: 0 }
-}
 
 class Hana {
   points: THREE.Points
   uniforms = {
     time: { value: 0 },
-    velocity: { value: new THREE.Vector3(...sphereSurfaceRandom()) }
+    velocity: { value: new THREE.Vector3(0, 0, 0) }
   }
-  constructor() {
+  constructor([vx, vy, vz]: N3D) {
     const shader = new THREE.ShaderMaterial({
       uniforms: this.uniforms,
       vertexShader,
@@ -52,24 +49,14 @@ class Hana {
       depthTest: false,
       side: THREE.DoubleSide,
     })
+    this.uniforms.velocity.value.x = vx
+    this.uniforms.velocity.value.y = vy
+    this.uniforms.velocity.value.z = vz
     this.points = new THREE.Points(sample(geometries), shader)
   }
   update(time: number) {
     this.uniforms.time.value = time / 4 % 1
   }
-}
-function sphereRandom() {
-  while (true) {
-    const x = 2 * Math.random() - 1
-    const y = 2 * Math.random() - 1
-    const z = 2 * Math.random() - 1
-    if (x * x + y * y + z * z < 1) return [x, y, z]
-  }
-}
-function sphereSurfaceRandom() {
-  const [x, y, z] = sphereRandom()
-  const r = Math.hypot(x, y, z)
-  return [x / r, y / r, z / r]
 }
 
 function generateGeometry(size: number) {
@@ -85,9 +72,8 @@ function generateGeometry(size: number) {
   return geometry
 }
 
-for(let i=0;i<512; i++) {
-  hanaList.push(new Hana())
-}
+const points = evenSpherePoints(5, 0.5)
+points.forEach(p => hanaList.push(new Hana(p)))
 hanaList.forEach(h => scene.add(h.points))
 ;(window as any).hanaList = hanaList
 animate()
