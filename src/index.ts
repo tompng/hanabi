@@ -49,9 +49,10 @@ class Hana {
       depthTest: false,
       side: THREE.DoubleSide,
     })
-    this.uniforms.velocity.value.x = vx
-    this.uniforms.velocity.value.y = vy
-    this.uniforms.velocity.value.z = vz
+    const v = 0.98 + 0.04 * Math.random()
+    this.uniforms.velocity.value.x = vx * v
+    this.uniforms.velocity.value.y = vy * v
+    this.uniforms.velocity.value.z = vz * v
     this.points = new THREE.Points(sample(geometries), shader)
   }
   update(time: number) {
