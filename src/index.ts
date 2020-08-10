@@ -1,6 +1,7 @@
 import * as THREE from 'three'
-import vertexShader from './shader.vert'
-import fragmentShader from './shader.frag'
+import hanabiUtil from './shaders/util.vert'
+import starVertexShader from './shaders/star.vert'
+import starFragmentShader from './shaders/star.frag'
 import { N3D, sphereRandom, evenSpherePoints } from './util'
 /*
 v' = -g-a(v-w)
@@ -22,10 +23,10 @@ camera.lookAt(0, 0, 0)
 const canvas = renderer.domElement
 document.body.appendChild(canvas)
 
-const hanaList: Hana[] = []
+const stars: Star[] = []
 function animate() {
   const time = performance.now() / 1000
-  hanaList.forEach(h => h.update(time))
+  stars.forEach(h => h.update(time))
   renderer.render(scene, camera)
   requestAnimationFrame(animate)
 }
@@ -34,7 +35,7 @@ function sample<T>(arr: T[]): T {
 }
 const geometries = [...Array(32)].map(() => generateGeometry(64))
 
-class Hana {
+class Star {
   points: THREE.Points
   uniforms = {
     time: { value: 0 },
@@ -43,11 +44,11 @@ class Hana {
   constructor([vx, vy, vz]: N3D) {
     const shader = new THREE.ShaderMaterial({
       uniforms: this.uniforms,
-      vertexShader,
-      fragmentShader,
+      vertexShader: starVertexShader,
+      fragmentShader: starFragmentShader,
       blending: THREE.AdditiveBlending,
       depthTest: false,
-      side: THREE.DoubleSide,
+      side: THREE.DoubleSide
     })
     const v = 0.98 + 0.04 * Math.random()
     this.uniforms.velocity.value.x = vx * v
@@ -73,8 +74,51 @@ function generateGeometry(size: number) {
   return geometry
 }
 
+function generateLineGeometry(size: number) {
+  const geometry = new THREE.BufferGeometry()
+  const positions: number[] = []
+  for (let i = 0; i < size; i++) {
+    const t = i / size
+    const t2 = (i + 1) / size
+    positions.push(t, -1, 0, t, +1, 0, t2, -1, 0, t, +1, 0, t2, +1, 0, t2, -1, 0)
+  }
+  geometry.setAttribute('position', new THREE.BufferAttribute(new Float32Array(positions), 3))
+  return geometry
+}
+
+THREE.InstancedBufferAttribute
+THREE.ShaderChunk['hanabi_util'] = hanabiUtil
+scene.add(
+  new THREE.Mesh(generateLineGeometry(64), new THREE.ShaderMaterial({
+    uniforms: {},
+    vertexShader: `
+    varying vec2 coord;
+    void main(){
+      float t = position.x;
+      float u = position.y;
+      vec3 pos = vec3(0.2 * t, sin(5.0*t), cos(5.0*t));
+      vec3 dpos = vec3(0.2, 5.0*cos(5.0*t), -5.0*sin(5.0*t));
+      vec3 gpos = (modelMatrix * vec4(pos, 1)).xyz;
+      float width = (4.0 + 8.0 * t * (1.0 - t)) * (0.5 + t) * 0.3;
+      vec3 n = normalize(cross(gpos - cameraPosition, dpos)) * width;
+      coord = vec2(t, u);
+      gl_Position = projectionMatrix * viewMatrix * vec4(gpos + 0.01 * u * n, 1);
+    }
+    `,
+    fragmentShader: `
+    varying vec2 coord;
+    void main(){
+      float alpha = max(coord.x * (1.0 - coord.x) * (1.0 - coord.y * coord.y) * 4.0 * 1.0 - 0.0, 0.2);
+      gl_FragColor = vec4(alpha,0,0,1);
+    }
+    `,
+    linewidth: 4,
+    blending: THREE.AdditiveBlending,
+    depthTest: false,
+  }))
+)
+
 const points = evenSpherePoints(5, 0.5)
-points.forEach(p => hanaList.push(new Hana(p)))
-hanaList.forEach(h => scene.add(h.points))
-;(window as any).hanaList = hanaList
+points.forEach(p => stars.push(new Star(p)))
+stars.forEach(h => scene.add(h.points))
 animate()
