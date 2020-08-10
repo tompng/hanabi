@@ -79,7 +79,7 @@ function generateGeometry(size: number) {
 }
 
 function generateLineGeometry(size: number) {
-  const geometry = new THREE.BufferGeometry()
+  const geometry = new THREE.InstancedBufferGeometry()
   const positions: number[] = []
   for (let i = 0; i < size; i++) {
     const t = i / size
@@ -87,7 +87,9 @@ function generateLineGeometry(size: number) {
     positions.push(t, -1, 0, t, +1, 0, t2, -1, 0, t, +1, 0, t2, +1, 0, t2, -1, 0)
   }
   geometry.setAttribute('position', new THREE.BufferAttribute(new Float32Array(positions), 3))
-  geometry.setAttribute('velocity', new THREE.BufferAttribute(new Float32Array(positions.map(v => 1)), 3))
+  const velocities: number[] = []
+  evenSpherePoints(2, 0.5).forEach(p => velocities.push(...p))
+  geometry.setAttribute('velocity', new THREE.InstancedBufferAttribute(new Float32Array(velocities), 3))
   return geometry
 }
 
@@ -95,18 +97,18 @@ THREE.InstancedBufferAttribute
 THREE.ShaderChunk['hanabi_util'] = hanabiUtil
 const curveUniforms = {
   time: { value: 0 },
-  color: { value: new THREE.Color('#ffaaaa') },
+  color: { value: new THREE.Color('#642') },
   center: { value: new THREE.Vector3(0, 0, 0) },
   baseVelocity: { value: new THREE.Vector3(0, 0, 0) },
   velocityScale: { value: 4.0 },
   friction: { value: 4 },
-  widthStart: { value: 0.04 },
-  widthEnd: { value: 0.01 },
+  widthStart: { value: 0.02 },
+  widthEnd: { value: 0.005 },
   duration: { value: 0.6 },
   curveDelay: { value: 0.1 }
 }
 scene.add(
-  new THREE.Mesh(generateLineGeometry(64), new THREE.ShaderMaterial({
+  new THREE.Mesh(generateLineGeometry(8), new THREE.ShaderMaterial({
     uniforms: curveUniforms,
     vertexShader: curveVertexShader,
     fragmentShader: curveFragmentShader,

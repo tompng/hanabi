@@ -10,6 +10,7 @@ uniform float time;
 uniform float widthStart;
 uniform float widthEnd;
 varying vec2 coord;
+varying float brightness;
 void main(){
   float t = position.x;
   float u = position.y;
@@ -21,5 +22,6 @@ void main(){
   float width = mix(widthStart, widthEnd, t);
   vec3 n = normalize(cross(gpos - cameraPosition, v)) * width;
   coord = vec2(2.0 * t - 1.0, u);
+  brightness = max(1.0 - time / duration, 0.0);
   gl_Position = projectionMatrix * viewMatrix * vec4(gpos + u * n, 1);
 }
