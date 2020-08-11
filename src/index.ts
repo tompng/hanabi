@@ -5,6 +5,7 @@ import starFragmentShader from './shaders/star.frag'
 import curveVertexShader from './shaders/curve.vert'
 import curveFragmentShader from './shaders/curve.frag'
 import { N3D, sphereRandom, evenSpherePoints } from './util'
+import { createRenderTarget, Smoother } from './smoother'
 /*
 v' = -g-a(v-w)
 v=w+(k*exp(-a*t)-g)/a
@@ -20,19 +21,67 @@ const scene = new THREE.Scene()
 const camera = new THREE.PerspectiveCamera(75, width / height, 0.01, 32)
 camera.up.set(0, 0, 1)
 camera.position.x = 0
-camera.position.y = -2
-camera.position.z = 0
-camera.lookAt(0, 0, 0)
+camera.position.y = -5
+camera.position.z = 0.1
+camera.lookAt(0, 0, 1.0)
+const camera2 = camera.clone()
+camera2.position.z *= -1
+camera2.lookAt(0, 0, -1.0)
 const canvas = renderer.domElement
 document.body.appendChild(canvas)
 
 type Updatable = { update: (t: number) => void }
 
 const updatables: Updatable[] = []
+const renderTarget = createRenderTarget(256)
+const renderTarget2 = createRenderTarget(256)
+const smoother = new Smoother(renderer)
+const waveUniforms = { map: { value: renderTarget2.texture }, time: { value: 0 } }
+const plane = new THREE.Mesh(
+  new THREE.PlaneGeometry(),
+  new THREE.ShaderMaterial({
+    uniforms: waveUniforms,
+    vertexShader: `
+      varying vec2 gpos;
+      void main() {
+        gpos = position.xy * 16.0;
+        gl_Position = projectionMatrix * modelViewMatrix * vec4(gpos, 0, 1);
+      }
+    `,
+    fragmentShader: `
+    varying vec2 gpos;
+    uniform sampler2D map;
+    uniform float time;
+      void main() {
+        vec2 gp = gpos * 0.7;
+        vec2 coord = vec2(gl_FragCoord.x / 800.0, 1.0 - gl_FragCoord.y / 600.0);
+        coord.x += 0.002 * (
+        +sin(gp.x * 70.0 + gp.y * 51.3 - time * 1.2)
+        +sin(gp.y * 83.0 - gp.x * 45.2 - time * 1.4)
+        +sin(gp.x * 67.0 + gp.y * 35.3 - time * 1.3)
+        +sin(gp.y * 91.3 - gp.x * 28.2 + time * 1.5)
+        +sin(gp.y * 21.3 - gp.x * 88.2 + time * 1.6)
+        +sin(gp.y * 81.3 - gp.x * 18.2 + time * 1.6));
+        gl_FragColor = texture2D(map, coord) * 0.4;
+      }
+    `,
+    side: THREE.DoubleSide
+  })
+)
+scene.add(plane)
 function animate() {
   const time = performance.now() / 1000
   updatables.forEach(h => h.update(time))
+  renderer.setRenderTarget(renderTarget)
+  renderer.render(scene, camera2)
+  renderer.setRenderTarget(null)
+  smoother.smooth(renderTarget.texture, renderTarget2, 1 / 256)
+  smoother.smooth(renderTarget2.texture, renderTarget, 1 / 256*1.5)
+  smoother.smooth(renderTarget.texture, renderTarget2, 1 / 256*3)
+  plane.visible = true
+  waveUniforms.time.value = time * 0.5;
   renderer.render(scene, camera)
+  plane.visible = false
   requestAnimationFrame(animate)
 }
 function sample<T>(arr: T[]): T {
@@ -52,7 +101,7 @@ class Star {
       vertexShader: starVertexShader,
       fragmentShader: starFragmentShader,
       blending: THREE.AdditiveBlending,
-      depthTest: false,
+      depthWrite: false,
       side: THREE.DoubleSide
     })
     const v = 0.98 + 0.04 * Math.random()
@@ -99,7 +148,7 @@ THREE.ShaderChunk['hanabi_util'] = hanabiUtil
 const curveUniforms = {
   time: { value: 0 },
   color: { value: new THREE.Color('#642') },
-  center: { value: new THREE.Vector3(0, 0, 0) },
+  center: { value: new THREE.Vector3(0, 0, 2) },
   baseVelocity: { value: new THREE.Vector3(0, 0, 0) },
   velocityScale: { value: 4.0 },
   friction: { value: 4 },
@@ -115,7 +164,7 @@ scene.add(
     fragmentShader: curveFragmentShader,
     linewidth: 4,
     blending: THREE.AdditiveBlending,
-    depthTest: false,
+    depthWrite: false,
   }))
 )
 updatables.push({

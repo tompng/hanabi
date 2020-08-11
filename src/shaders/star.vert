@@ -25,6 +25,10 @@ void main() {
     kira = 0.5;
     pos = positionAt(v0, 6.0, t);
   }
-
+  pos.z += 2.0;
+  if (pos.z < -0.01) {
+    gl_Position = vec4(0, 0, 0, -1);
+    return;
+  }
   gl_Position = projectionMatrix * modelViewMatrix * vec4(pos, 1);
 }
