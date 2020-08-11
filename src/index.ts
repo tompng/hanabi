@@ -18,6 +18,7 @@ const height = 600
 renderer.setSize(width, height)
 const scene = new THREE.Scene()
 const camera = new THREE.PerspectiveCamera(75, width / height, 0.01, 32)
+camera.up.set(0, 0, 1)
 camera.position.x = 0
 camera.position.y = -2
 camera.position.z = 0
