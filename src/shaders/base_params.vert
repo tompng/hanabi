@@ -18,5 +18,4 @@ uniform vec3 baseVelocity;
 uniform float velocityScale;
 uniform float friction;
 uniform float duration;
-uniform float curveDelay;
 uniform float time;

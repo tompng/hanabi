@@ -5,10 +5,11 @@ const float resolution = 800.0;
 varying float brightness;
 
 void main() {
+  float burnRate = 1.0 + burnRateRandom * burnRateRandomness;
+  if (time > duration * burnRate) return;
   vec3 v0 = baseVelocity + velocityScale * direction * (1.0 + speedRandom * speedRandomness);
   float friction2 = friction * (1.0 + frictionRandom * frictionRandomness);
   vec3 gpos = center + positionAt(v0, friction2, time);
-  float burnRate = 1.0 + burnRateRandom * burnRateRandomness;
   float bt = time - beeStart * burnRate;
   if (bt > 0.0) {
     float k = beeDecay * (1.0 + beeDecayRandom * beeDecayRandomness);
