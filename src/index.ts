@@ -2,16 +2,9 @@ import * as THREE from 'three'
 import hanabiUtil from './shaders/util.vert'
 import starVertexShader from './shaders/star.vert'
 import starFragmentShader from './shaders/star.frag'
-import curveVertexShader from './shaders/curve.vert'
-import curveFragmentShader from './shaders/curve.frag'
+import { CurveStar } from './CurveStar'
 import { N3D, sphereRandom, evenSpherePoints } from './util'
 import { createRenderTarget, Smoother } from './smoother'
-/*
-v' = -g-a(v-w)
-v=w+(k*exp(-a*t)-g)/a
-v=w+(g/a+(v0-w))*exp(-a*t)-g/a
-x=(w-g/a)t-(g+a(v0-w))/aa*(exp(-a*t)-1)
-*/
 
 const renderer = new THREE.WebGLRenderer()
 const width = 800
@@ -21,12 +14,12 @@ const scene = new THREE.Scene()
 const camera = new THREE.PerspectiveCamera(75, width / height, 0.01, 32)
 camera.up.set(0, 0, 1)
 camera.position.x = 0
-camera.position.y = -5
-camera.position.z = 0.1
-camera.lookAt(0, 0, 1.0)
+camera.position.y = -2
+camera.position.z = 1.75
+camera.lookAt(0, 0, 1.75)
 const camera2 = camera.clone()
 camera2.position.z *= -1
-camera2.lookAt(0, 0, -1.0)
+camera2.lookAt(0, 0, -1.75)
 const canvas = renderer.domElement
 document.body.appendChild(canvas)
 
@@ -71,17 +64,17 @@ const plane = new THREE.Mesh(
 scene.add(plane)
 function animate() {
   const time = performance.now() / 1000
-  updatables.forEach(h => h.update(time))
-  renderer.setRenderTarget(renderTarget)
-  renderer.render(scene, camera2)
-  renderer.setRenderTarget(null)
-  smoother.smooth(renderTarget.texture, renderTarget2, 1 / 256)
-  smoother.smooth(renderTarget2.texture, renderTarget, 1 / 256*1.5)
-  smoother.smooth(renderTarget.texture, renderTarget2, 1 / 256*3)
-  plane.visible = true
-  waveUniforms.time.value = time * 0.5;
+  updatables.forEach(h => h.update(time / 4 % 1))
+  // renderer.setRenderTarget(renderTarget)
+  // renderer.render(scene, camera2)
+  // renderer.setRenderTarget(null)
+  // smoother.smooth(renderTarget.texture, renderTarget2, 1 / 256)
+  // smoother.smooth(renderTarget2.texture, renderTarget, 1 / 256*1.5)
+  // smoother.smooth(renderTarget.texture, renderTarget2, 1 / 256*3)
+  // plane.visible = true
+  // waveUniforms.time.value = time * 0.5;
   renderer.render(scene, camera)
-  plane.visible = false
+  // plane.visible = false
   requestAnimationFrame(animate)
 }
 function sample<T>(arr: T[]): T {
@@ -111,7 +104,7 @@ class Star {
     this.points = new THREE.Points(sample(geometries), shader)
   }
   update(time: number) {
-    this.uniforms.time.value = time / 4 % 1
+    this.uniforms.time.value = time
   }
 }
 
@@ -128,50 +121,11 @@ function generateGeometry(size: number) {
   return geometry
 }
 
-function generateLineGeometry(size: number) {
-  const geometry = new THREE.InstancedBufferGeometry()
-  const positions: number[] = []
-  for (let i = 0; i < size; i++) {
-    const t = i / size
-    const t2 = (i + 1) / size
-    positions.push(t, -1, 0, t, +1, 0, t2, -1, 0, t, +1, 0, t2, +1, 0, t2, -1, 0)
-  }
-  geometry.setAttribute('position', new THREE.BufferAttribute(new Float32Array(positions), 3))
-  const velocities: number[] = []
-  evenSpherePoints(2, 0.5).forEach(p => velocities.push(...p))
-  geometry.setAttribute('velocity', new THREE.InstancedBufferAttribute(new Float32Array(velocities), 3))
-  return geometry
-}
-
-THREE.InstancedBufferAttribute
 THREE.ShaderChunk['hanabi_util'] = hanabiUtil
-const curveUniforms = {
-  time: { value: 0 },
-  color: { value: new THREE.Color('#642') },
-  center: { value: new THREE.Vector3(0, 0, 2) },
-  baseVelocity: { value: new THREE.Vector3(0, 0, 0) },
-  velocityScale: { value: 4.0 },
-  friction: { value: 4 },
-  widthStart: { value: 0.02 },
-  widthEnd: { value: 0.005 },
-  duration: { value: 0.6 },
-  curveDelay: { value: 0.1 }
-}
-scene.add(
-  new THREE.Mesh(generateLineGeometry(8), new THREE.ShaderMaterial({
-    uniforms: curveUniforms,
-    vertexShader: curveVertexShader,
-    fragmentShader: curveFragmentShader,
-    linewidth: 4,
-    blending: THREE.AdditiveBlending,
-    depthWrite: false,
-  }))
-)
-updatables.push({
-  update(time) {
-    curveUniforms.time.value = time / 4 % 1
-  }
-})
+
+const curve = new CurveStar()
+scene.add(curve.mesh)
+updatables.push(curve)
 
 const points = evenSpherePoints(5, 0.5)
 points.forEach(p => {

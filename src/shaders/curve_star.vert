@@ -16,9 +16,8 @@ void main(){
   float u = position.y;
   vec3 v0 = baseVelocity + velocityScale * velocity;
   float t2 = time - t * min(time, curveDelay);
-  vec3 pos = center + positionAt(v0, friction, t2);
+  vec3 gpos = center + positionAt(v0, friction, t2);
   vec3 v = -velocityAt(v0, friction, t2);
-  vec3 gpos = (modelMatrix * vec4(pos, 1)).xyz;
   float width = mix(widthStart, widthEnd, t);
   vec3 n = normalize(cross(gpos - cameraPosition, v)) * width;
   coord = vec2(2.0 * t - 1.0, u);
