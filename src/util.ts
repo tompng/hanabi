@@ -8,6 +8,7 @@ export function sphereRandom(): N3D {
     if (x * x + y * y + z * z < 1) return [x, y, z]
   }
 }
+
 export function sphereSurfaceRandom(): N3D {
   const [x, y, z] = sphereRandom()
   const r = Math.hypot(x, y, z)
@@ -68,9 +69,29 @@ export function evenSpherePoints(step: number, randomness: number = 0) { // N = 
     p[1] = y / r
     p[2] = z / r
   })
+  randomRotatePoints(points)
   return points
 }
 
+export function randomRotatePoints(points: N3D[]) {
+  const [ax, ay, az] = sphereSurfaceRandom()
+  const th = 2 * Math.PI * Math.random()
+  const cos = Math.cos(th)
+  const sin = Math.sin(th)
+  points.forEach(p => {
+    const [x, y, z] = p
+    const dot = x * ax + y * ay + z * az
+    const bx = x - dot * ax
+    const by = y - dot * ay
+    const bz = z - dot * az
+    const cx = y * az - z * ay
+    const cy = z * ax - x * az
+    const cz = x * ay - y * ax
+    p[0] = bx * cos + cx * sin + dot * ax
+    p[1] = by * cos + cy * sin + dot * ay
+    p[2] = bz * cos + cz * sin + dot * az
+  })
+}
 
 /*
 v' = -g-a(v-w)
