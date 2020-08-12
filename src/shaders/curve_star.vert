@@ -5,6 +5,7 @@ uniform float widthStart;
 uniform float widthEnd;
 varying vec2 coord;
 varying float brightness;
+const float particleFriction = 32.0;
 
 void main(){
   float burnRate = 1.0 + burnRateRandom * burnRateRandomness;
@@ -12,21 +13,23 @@ void main(){
   float t = position.x;
   float u = position.y;
   vec3 v0 = baseVelocity + velocityScale * direction * (1.0 + speedRandom * speedRandomness);
-  float t2 = time - t * min(time, curveDelay);
+  float delay = t * min(time, curveDelay);
+  float t2 = time - delay;
   float friction2 = friction * (1.0 + frictionRandom * frictionRandomness);
-  vec3 gpos = center + positionAt(v0, friction2, t2);
-  vec3 v = -velocityAt(v0, friction2, t2);
+  vec3 v1 = velocityAt(v0, friction2, t2);
+  vec3 gpos = center + positionAt(v0, friction2, t2) + positionAt(v1, particleFriction, delay);
+  vec3 v = velocityAt(v0, friction2, t2) + velocityAt(v1, particleFriction, delay);
   #ifdef BEE
     float bt = t2 - beeStart * burnRate;
     if (bt > 0.0) {
       float k = beeDecay * (1.0 + beeDecayRandom * beeDecayRandomness);
       float speed = beeSpeed * (1.0 + beeSpeedRandom * beeSpeedRandomness);
       gpos += beePositionAt(k, bt) * beeDirection * speed;
-      v -= beeVelocityAt(k, bt) * beeDirection * speed;
+      v += beeVelocityAt(k, bt) * beeDirection * speed;
     }
   #endif
   float width = mix(widthStart, widthEnd, t);
-  vec3 n = normalize(cross(gpos - cameraPosition, v)) * width;
+  vec3 n = normalize(cross(v, gpos - cameraPosition)) * width;
   coord = vec2(2.0 * t - 1.0, u);
   brightness = max(1.0 - time / duration / burnRate, 0.0);
   gl_Position = projectionMatrix * viewMatrix * vec4(gpos + u * n, 1);

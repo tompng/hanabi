@@ -15,6 +15,7 @@ void main() {
   float t2 = time + particlePhase * rate;
   float t = rate * floor(t2 / rate) - particlePhase * rate;
   t2 = time - t;
+  if (t < 0.0) return;
   vec3 pv0 = velocityAt(v0, friction2, t) + particleDirection * particleSpeed * (1.0 + particleSpeedRandom * particleSpeedRandomness);
   float pfriction2 = particleFriction * (1.0 + particleFrictionRandom * particleFrictionRandomness);
   vec3 gpos = center + positionAt(v0, friction2, t) + positionAt(pv0, pfriction2, t2);
