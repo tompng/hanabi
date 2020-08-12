@@ -70,3 +70,50 @@ export function evenSpherePoints(step: number, randomness: number = 0) { // N = 
   })
   return points
 }
+
+
+export const wind: N3D = [0.65, 0, 0]
+export const gravity = -9.8;
+export function velocityAt([vx, vy, vz]: N3D, k: number, t: number): N3D {
+  const e = Math.exp(-k * t)
+  const [wx, wy, wz] = wind
+  return [
+    wx + (vx - wx) * e,
+    wy + (vy - wy) * e,
+    wz + gravity / k + (vz - wz - gravity / k) * e
+  ]
+}
+
+export function positionAt([vx, vy, vz]: N3D, k: number, t: number): N3D {
+  const e = Math.exp(-k * t)
+  const [wx, wy, wz] = wind
+  return [
+    wx * t - (vx - wx) * (e - 1) / k,
+    wy * t - (vy - wy) * (e - 1) / k,
+    (wz + gravity / k) * t - (vz - wz - gravity / k) * (e - 1) / k
+  ]
+}
+
+export function beePositionAt(k: number, t: number) {
+  return 1.0 - (k * t + 1.0) * Math.exp(-k * t);
+}
+
+export function beeVelocityAt(k: number, t: number) {
+  return k * k * t * Math.exp(-k * t);
+}
+
+export function spiralPositionAt(k: number, w: number, t: number) {
+  const e = Math.exp(-k * t)
+  return {
+    x: 1 - (k * t + 1) * e * Math.cos(w * t),
+    y: w * e * Math.sin(w * t)
+  }
+}
+
+export function spiralVelocityAt(k: number, w: number, t: number) {
+  const e = Math.exp(-k * t)
+  return {
+    x: (k * k - w * w) * t * e * Math.cos(w * t),
+    y: -2 * k * w * t * e * Math.sin(w * t)
+  }
+}
