@@ -30,7 +30,6 @@ export function evenSpherePoints(step: number, randomness: number = 0) { // N = 
   const edge: N3D = [r, 0, 0]
   const redge: N3D = [-r, 0, 0]
   const points: N3D[] = []
-  console.log(edge, coords)
   function addTriangle([ax, ay, az]: N3D, [bx, by, bz]: N3D, [cx, cy, cz]: N3D) {
     let n = 2 * step - 1
     for (let j = 0; j < step; j++) {
