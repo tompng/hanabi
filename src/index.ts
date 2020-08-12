@@ -3,8 +3,10 @@ import hanabiUtil from './shaders/util.vert'
 import starVertexShader from './shaders/star.vert'
 import starFragmentShader from './shaders/star.frag'
 import { CurveStar } from './CurveStar'
+import { PointStar } from './PointStar'
 import { N3D, sphereRandom, evenSpherePoints } from './util'
 import { createRenderTarget, Smoother } from './smoother'
+import { generateStarBaseAttributes } from './attributes'
 
 const renderer = new THREE.WebGLRenderer()
 const width = 800
@@ -122,10 +124,16 @@ function generateGeometry(size: number) {
 }
 
 THREE.ShaderChunk['hanabi_util'] = hanabiUtil
+const direction = evenSpherePoints(2, 0.5)
+const attributes = generateStarBaseAttributes(direction.length)
 
-const curve = new CurveStar()
-scene.add(curve.mesh)
-updatables.push(curve)
+const cstar = new CurveStar(direction, attributes)
+scene.add(cstar.mesh)
+updatables.push(cstar)
+
+const pstar = new PointStar(direction, attributes)
+scene.add(pstar.mesh)
+updatables.push(pstar)
 
 const points = evenSpherePoints(5, 0.5)
 points.forEach(p => {

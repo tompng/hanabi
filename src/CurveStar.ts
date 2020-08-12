@@ -1,8 +1,8 @@
 import * as THREE from 'three'
-import { evenSpherePoints } from './util'
+import type { N3D } from './util'
 import vertexShader from './shaders/curve_star.vert'
 import fragmentShader from './shaders/curve_star.frag'
-import { generateStarBaseAttributes, setStarBaseAttributes } from './attributes'
+import { setStarBaseAttributes, StarBaseAttributes } from './attributes'
 
 const lineAttributes: Record<number, THREE.BufferAttribute | undefined> = {}
 
@@ -20,14 +20,15 @@ export class CurveStar {
     curveDelay: { value: 0.1 }
   }
   mesh: THREE.Mesh
-  constructor() {
-    this.mesh = new THREE.Mesh(generateLineGeometry(2), new THREE.ShaderMaterial({
+  constructor(direction: N3D[], attrs: StarBaseAttributes) {
+    const material = new THREE.ShaderMaterial({
       uniforms: this.uniforms,
       vertexShader: vertexShader,
       fragmentShader: fragmentShader,
       blending: THREE.AdditiveBlending,
       depthWrite: false,
-    }))
+    })
+    this.mesh = new THREE.Mesh(generateGeometry(direction, attrs), material)
   }
   update(time: number) {
     this.uniforms.time.value = time
@@ -48,14 +49,12 @@ function generateLineAttributes(step: number) {
   return attr
 }
 
-function generateLineGeometry(countStep: number, lineStep: number = 8) {
+function generateGeometry(direction: N3D[], attrs: StarBaseAttributes, lineStep: number = 8) {
   const geometry = new THREE.InstancedBufferGeometry()
-  const direction = evenSpherePoints(countStep, 0.5)
   const ds: number[] = []
   direction.forEach(p => ds.push(...p))
   geometry.setAttribute('position', generateLineAttributes(lineStep))
-  const attributes = generateStarBaseAttributes(direction.length)
-  setStarBaseAttributes(geometry, attributes)
+  setStarBaseAttributes(geometry, attrs)
   geometry.setAttribute('direction', new THREE.InstancedBufferAttribute(new Float32Array(ds), 3))
   return geometry
 }
