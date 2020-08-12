@@ -1,0 +1,11 @@
+attribute float particlePhase;
+attribute vec3 particleDirection;
+attribute float particleSpeedRandom;
+attribute float particleFrictionRandom;
+attribute float particleDurationRandom;
+const float particleSpeed = 1.0;
+const float particleSpeedRandomness = 0.0;
+const float particleFrictionRandomness = 0.0;
+const float particleFriction = 32.0;
+const float particleDuration = 0.1;
+const float particleDurationRandomness = 0.5;

@@ -2,10 +2,12 @@ import * as THREE from 'three'
 import hanabiUtilChunk from './shaders/util.vert'
 import baseParamsChunk from './shaders/base_params.vert'
 import blinkParamsChunk from './shaders/blink_params.vert'
+import blinkParticleChunk from './shaders/particle_params.vert'
 import starVertexShader from './shaders/star.vert'
 import starFragmentShader from './shaders/star.frag'
 import { CurveStar } from './CurveStar'
 import { PointStar } from './PointStar'
+import { ParticleTailStar } from './ParticleTailStar'
 import { N3D, sphereRandom, evenSpherePoints } from './util'
 import { createRenderTarget, Smoother } from './smoother'
 import { generateStarBaseAttributes } from './attributes'
@@ -13,6 +15,7 @@ import { generateStarBaseAttributes } from './attributes'
 THREE.ShaderChunk['hanabi_util'] = hanabiUtilChunk
 THREE.ShaderChunk['base_params'] = baseParamsChunk
 THREE.ShaderChunk['blink_params'] = blinkParamsChunk
+THREE.ShaderChunk['particle_params'] = blinkParticleChunk
 
 const renderer = new THREE.WebGLRenderer()
 const width = 800
@@ -139,6 +142,10 @@ updatables.push(cstar)
 const pstar = new PointStar(direction, attributes)
 scene.add(pstar.mesh)
 updatables.push(pstar)
+
+const tstar = new ParticleTailStar(direction, attributes)
+scene.add(tstar.mesh)
+updatables.push(tstar)
 
 const points = evenSpherePoints(5, 0.5)
 points.forEach(p => {

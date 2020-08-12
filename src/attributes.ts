@@ -167,10 +167,10 @@ export function setStarParticleAttributes(geometry: THREE.BufferGeometry | THREE
     set(name, array, 3)
   }
   add1('blinkPhase', blinkPhases)
-  add1('blinkRateRandoms', blinkRateRandoms)
-  add1('particlePhases', particlePhases)
-  add3('particleDirections', particleDirections)
-  add1('particleSpeedRandoms', particleSpeedRandoms)
-  add1('particleFrictionRandoms', particleFrictionRandoms)
-  add1('particleDurationRandoms', particleDurationRandoms)
+  add1('blinkRateRandom', blinkRateRandoms)
+  add1('particlePhase', particlePhases)
+  add3('particleDirection', particleDirections)
+  add1('particleSpeedRandom', particleSpeedRandoms)
+  add1('particleFrictionRandom', particleFrictionRandoms)
+  add1('particleDurationRandom', particleDurationRandoms)
 }
