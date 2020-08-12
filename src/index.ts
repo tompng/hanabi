@@ -1,5 +1,6 @@
 import * as THREE from 'three'
-import hanabiUtil from './shaders/util.vert'
+import hanabiUtilChunk from './shaders/util.vert'
+import baseParamsChunk from './shaders/base_params.vert'
 import starVertexShader from './shaders/star.vert'
 import starFragmentShader from './shaders/star.frag'
 import { CurveStar } from './CurveStar'
@@ -123,7 +124,8 @@ function generateGeometry(size: number) {
   return geometry
 }
 
-THREE.ShaderChunk['hanabi_util'] = hanabiUtil
+THREE.ShaderChunk['hanabi_util'] = hanabiUtilChunk
+THREE.ShaderChunk['base_params'] = baseParamsChunk
 const direction = evenSpherePoints(2, 0.5)
 const attributes = generateStarBaseAttributes(direction.length)
 
