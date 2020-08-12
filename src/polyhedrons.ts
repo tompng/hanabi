@@ -42,3 +42,24 @@ for (let i = 0; i < 5; i++) {
   polyhedron12.push([x, y, z], [-x, -y, -z])
 }
 
+export const polyhedron20: N3D[] = []
+function add(i: number, j: number, k: number) {
+  const a = polyhedron12[i]
+  const b = polyhedron12[j]
+  const c = polyhedron12[k]
+  const x = a[0] + b[0] + c[0]
+  const y = a[1] + b[1] + c[1]
+  const z = a[2] + b[2] + c[2]
+  const r = Math.hypot(x, y, z)
+  polyhedron20.push([x / r, y / r, z / r])
+}
+for (let i = 0; i < 5; i++) {
+  const a = 2 + 2 * i
+  const b = 2 + (i + 1) % 5 * 2
+  const c = a + 1
+  const d = b + 1
+  add(a, b, 0)
+  add(c, d, 1)
+  add(a, b, 2 + (a + 5) % 10)
+  add(c, d, 1 + (c + 4) % 10)
+}
