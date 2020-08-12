@@ -22,6 +22,7 @@ export class CurveStar {
   mesh: THREE.Mesh
   constructor(direction: N3D[], attrs: StarBaseAttributes) {
     const material = new THREE.ShaderMaterial({
+      defines: { BEE: true },
       uniforms: this.uniforms,
       vertexShader: vertexShader,
       fragmentShader: fragmentShader,

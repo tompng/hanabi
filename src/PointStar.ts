@@ -17,7 +17,7 @@ export class PointStar {
   mesh: THREE.Points
   constructor(direction: N3D[], attrs: StarBaseAttributes) {
     const material = new THREE.ShaderMaterial({
-      defines: { BLINK: true },
+      defines: { BLINK: true, BEE: true },
       uniforms: this.uniforms,
       vertexShader: vertexShader,
       fragmentShader: fragmentShader,
