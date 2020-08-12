@@ -26,6 +26,8 @@ export function generateStarBaseAttributes(size: number) {
   const beeDirections: N3D[] = []
   const beeSpeedRandoms: number[] = []
   const beeDecayRandoms: number[] = []
+  const blinkPhases: number[] = []
+  const blinkRateRandoms: number[] = []
   for (let i = 0; i < size; i++) {
     const beeDirection: N3D = sphereSurfaceRandom()
     burnRateRandoms.push(Math.random() - 0.5)
@@ -35,6 +37,8 @@ export function generateStarBaseAttributes(size: number) {
     beeSpeedRandoms.push(Math.random() - 0.5)
     beeDecayRandoms.push(Math.random() - 0.5)
     beeDirections.push(beeDirection)
+    blinkPhases.push(Math.random())
+    blinkRateRandoms.push(Math.random() - 0.5)
   }
   return {
     size,
@@ -44,26 +48,26 @@ export function generateStarBaseAttributes(size: number) {
     beeStartRandoms,
     beeDirections,
     beeSpeedRandoms,
-    beeDecayRandoms
+    beeDecayRandoms,
+    blinkPhases,
+    blinkRateRandoms
   }
 }
 
 export type StarParticleAttributes = ReturnType<typeof generateStarParticleAttributes>
 export function generateStarParticleAttributes(size: number) {
-  const blinkStartRandoms: number[] = []
   const blinkPhases: number[] = []
   const blinkRateRandoms: number[] = []
   const particleDirections: N3D[] = []
-  const particlePhaseRandoms: number[] = []
+  const particlePhases: number[] = []
   const particleSpeedRandoms: number[] = []
   const particleFrictionRandoms: number[] = []
   const particleDurationRandoms: number[] = []
   for (let i = 0; i < size; i++) {
-    blinkStartRandoms.push(Math.random() - 0.5)
     blinkPhases.push(Math.random())
     blinkRateRandoms.push(Math.random() - 0.5)
     particleDirections.push(sphereSurfaceRandom())
-    particlePhaseRandoms.push(Math.random() - 0.5)
+    particlePhases.push(Math.random() - 0.5)
     particleSpeedRandoms.push(Math.random() - 0.5)
     particleFrictionRandoms.push(Math.random() - 0.5)
     particleDurationRandoms.push(Math.random() - 0.5)
@@ -71,9 +75,8 @@ export function generateStarParticleAttributes(size: number) {
   return {
     size,
     blinkPhases,
-    blinkStartRandoms,
     blinkRateRandoms,
-    particlePhaseRandoms,
+    particlePhases,
     particleDirections,
     particleSpeedRandoms,
     particleFrictionRandoms,
@@ -82,7 +85,7 @@ export function generateStarParticleAttributes(size: number) {
 }
 
 export function setStarBaseAttributes(geometry: THREE.BufferGeometry | THREE.InstancedBufferGeometry, attrs: StarBaseAttributes, repeat: number = 1) {
-const {
+  const {
     burnRateRandoms,
     speedRandoms,
     frictionRandoms,
@@ -120,12 +123,29 @@ const {
   add1('beeDecayRandom', beeDecayRandoms)
 }
 
+export function setStarBaseBlinkAttributes(geometry: THREE.BufferGeometry | THREE.InstancedBufferGeometry, attrs: StarBaseAttributes, repeat: number = 1) {
+  const { blinkPhases, blinkRateRandoms } = attrs
+  function add(name: string, arr: number[]) {
+    let array: number[] = arr
+    if (repeat > 1) {
+      array = []
+      arr.forEach(v => { for (let i = 0; i < repeat; i++) array.push(v) })
+    }
+    if (geometry instanceof THREE.InstancedBufferGeometry) {
+      geometry.setAttribute(name, new THREE.InstancedBufferAttribute(new Float32Array(arr), 1))
+    } else {
+      geometry.setAttribute(name, new THREE.BufferAttribute(new Float32Array(arr), 1))
+    }
+  }
+  add('blinkPhase', blinkPhases)
+  add('blinkRateRandom', blinkRateRandoms)
+}
+
 export function setStarParticleAttributes(geometry: THREE.BufferGeometry | THREE.InstancedBufferGeometry, attrs: StarParticleAttributes) {
   const {
     blinkPhases,
-    blinkStartRandoms,
     blinkRateRandoms,
-    particlePhaseRandoms,
+    particlePhases,
     particleDirections,
     particleSpeedRandoms,
     particleFrictionRandoms,
@@ -147,9 +167,8 @@ export function setStarParticleAttributes(geometry: THREE.BufferGeometry | THREE
     set(name, array, 3)
   }
   add1('blinkPhase', blinkPhases)
-  add1('blinkStartRandoms', blinkStartRandoms)
   add1('blinkRateRandoms', blinkRateRandoms)
-  add1('particlePhaseRandoms', particlePhaseRandoms)
+  add1('particlePhases', particlePhases)
   add3('particleDirections', particleDirections)
   add1('particleSpeedRandoms', particleSpeedRandoms)
   add1('particleFrictionRandoms', particleFrictionRandoms)

@@ -1,6 +1,7 @@
 import * as THREE from 'three'
 import hanabiUtilChunk from './shaders/util.vert'
 import baseParamsChunk from './shaders/base_params.vert'
+import blinkParamsChunk from './shaders/blink_params.vert'
 import starVertexShader from './shaders/star.vert'
 import starFragmentShader from './shaders/star.frag'
 import { CurveStar } from './CurveStar'
@@ -8,6 +9,10 @@ import { PointStar } from './PointStar'
 import { N3D, sphereRandom, evenSpherePoints } from './util'
 import { createRenderTarget, Smoother } from './smoother'
 import { generateStarBaseAttributes } from './attributes'
+
+THREE.ShaderChunk['hanabi_util'] = hanabiUtilChunk
+THREE.ShaderChunk['base_params'] = baseParamsChunk
+THREE.ShaderChunk['blink_params'] = blinkParamsChunk
 
 const renderer = new THREE.WebGLRenderer()
 const width = 800
@@ -124,9 +129,7 @@ function generateGeometry(size: number) {
   return geometry
 }
 
-THREE.ShaderChunk['hanabi_util'] = hanabiUtilChunk
-THREE.ShaderChunk['base_params'] = baseParamsChunk
-const direction = evenSpherePoints(2, 0.5)
+const direction = evenSpherePoints(3, 0.5)
 const attributes = generateStarBaseAttributes(direction.length)
 
 const cstar = new CurveStar(direction, attributes)
@@ -139,8 +142,8 @@ updatables.push(pstar)
 
 const points = evenSpherePoints(5, 0.5)
 points.forEach(p => {
-  const star = new Star(p)
-  updatables.push(star)
-  scene.add(star.points)
+  // const star = new Star(p)
+  // updatables.push(star)
+  // scene.add(star.points)
 })
 animate()

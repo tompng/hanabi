@@ -1,5 +1,6 @@
 #include <hanabi_util>
 #include <base_params>
+#include <blink_params>
 const float size = 0.02;
 const float resolution = 800.0;
 varying float brightness;
@@ -19,5 +20,11 @@ void main() {
   float fPointSize = resolution * size / distance(cameraPosition, gpos);
   gl_PointSize = clamp(2.0, fPointSize, 16.0);
   brightness = max(1.0 - time / duration / burnRate, 0.0) * fPointSize / gl_PointSize;
+  #ifdef BLINK
+  if (time > blinkStart * burnRate) {
+    float t = time / blinkRate / (1.0 + blinkRateRandom * blinkRateRandomness) - blinkPhase;
+    brightness *= step(0.5, t - floor(t));
+  }
+  #endif
   gl_Position = projectionMatrix * viewMatrix * vec4(gpos, 1);
 }
