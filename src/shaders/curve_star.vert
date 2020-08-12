@@ -1,5 +1,5 @@
 #include <hanabi_util>
-attribute vec3 velocity;
+attribute vec3 direction;
 uniform vec3 center;
 uniform vec3 baseVelocity;
 uniform float velocityScale;
@@ -14,7 +14,7 @@ varying float brightness;
 void main(){
   float t = position.x;
   float u = position.y;
-  vec3 v0 = baseVelocity + velocityScale * velocity;
+  vec3 v0 = baseVelocity + velocityScale * direction;
   float t2 = time - t * min(time, curveDelay);
   vec3 gpos = center + positionAt(v0, friction, t2);
   vec3 v = -velocityAt(v0, friction, t2);

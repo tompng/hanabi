@@ -2,6 +2,7 @@ import * as THREE from 'three'
 import { evenSpherePoints } from './util'
 import vertexShader from './shaders/curve_star.vert'
 import fragmentShader from './shaders/curve_star.frag'
+import { generateStarBaseAttributes, setStarBaseAttributes } from './attributes'
 
 const lineAttributes: Record<number, THREE.BufferAttribute | undefined> = {}
 
@@ -49,9 +50,12 @@ function generateLineAttributes(step: number) {
 
 function generateLineGeometry(countStep: number, lineStep: number = 8) {
   const geometry = new THREE.InstancedBufferGeometry()
-  const velocities: number[] = []
-  evenSpherePoints(countStep, 0.5).forEach(p => velocities.push(...p))
+  const direction = evenSpherePoints(countStep, 0.5)
+  const ds: number[] = []
+  direction.forEach(p => ds.push(...p))
   geometry.setAttribute('position', generateLineAttributes(lineStep))
-  geometry.setAttribute('velocity', new THREE.InstancedBufferAttribute(new Float32Array(velocities), 3))
+  const attributes = generateStarBaseAttributes(direction.length)
+  setStarBaseAttributes(geometry, attributes)
+  geometry.setAttribute('direction', new THREE.InstancedBufferAttribute(new Float32Array(ds), 3))
   return geometry
 }
