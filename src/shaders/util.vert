@@ -10,17 +10,17 @@ vec3 positionAt(vec3 v0, float k, float t) {
 }
 
 float beePositionAt(float k, float t) {
-  return 1.0 - (k * t + 1.0) * exp(-k * t);
+  return (1.0 - (k * t + 1.0) * exp(-k * t)) / k;
 }
 
 float beeVelocityAt(float k, float t) {
-  return k * k * t * exp(-k * t);
+  return k * t * exp(-k * t);
 }
 
 vec2 spiralPositionAt(float k, float w, float t) {
-  return vec2(1, 0) - (vec2(k, -w) * t + vec2(1, 0)) * exp(-k * t) * sin(vec2(w * t + pi / 2.0, w * t));
+  return (vec2(1, 0) - (vec2(k, -w) * t + vec2(1, 0)) * exp(-k * t) * sin(vec2(w * t + pi / 2.0, w * t))) / k;
 }
 
 vec2 spiralVelocityAt(float k, float w, float t) {
-  return vec2(k * k - w * w, -2.0 * k * w) * t * exp(-k * t) * sin(vec2(w * t + pi / 2.0, w * t));
+  return vec2(k - w * w / k, -2.0 * w) * t * exp(-k * t) * sin(vec2(w * t + pi / 2.0, w * t));
 }

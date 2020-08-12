@@ -120,25 +120,25 @@ export function positionAt([vx, vy, vz]: N3D, k: number, t: number): N3D {
 }
 
 export function beePositionAt(k: number, t: number) {
-  return 1.0 - (k * t + 1.0) * Math.exp(-k * t);
+  return (1.0 - (k * t + 1.0) * Math.exp(-k * t)) / k;
 }
 
 export function beeVelocityAt(k: number, t: number) {
-  return k * k * t * Math.exp(-k * t);
+  return k * t * Math.exp(-k * t);
 }
 
 export function spiralPositionAt(k: number, w: number, t: number) {
   const e = Math.exp(-k * t)
   return {
-    x: 1 - (k * t + 1) * e * Math.cos(w * t),
-    y: w * e * Math.sin(w * t)
+    x: (1 - (k * t + 1) * e * Math.cos(w * t)) / k,
+    y: w * e * Math.sin(w * t) / k
   }
 }
 
 export function spiralVelocityAt(k: number, w: number, t: number) {
   const e = Math.exp(-k * t)
   return {
-    x: (k * k - w * w) * t * e * Math.cos(w * t),
-    y: -2 * k * w * t * e * Math.sin(w * t)
+    x: (k - w * w / k) * t * e * Math.cos(w * t),
+    y: -2 * w * t * e * Math.sin(w * t)
   }
 }

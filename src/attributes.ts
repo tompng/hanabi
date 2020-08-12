@@ -26,22 +26,15 @@ export function generateStarBaseAttributes(size: number) {
   const beeDirections: N3D[] = []
   const beeSpeedRandoms: number[] = []
   const beeDecayRandoms: number[] = []
-  const beeSpiralFreqRandoms: number[] = []
-  const beeSpiralAxisAlphas: N3D[] = []
-  const beeSpiralAxisBetas: N3D[] = []
   for (let i = 0; i < size; i++) {
     const beeDirection: N3D = sphereSurfaceRandom()
-    const [beeSpiralAxisAlpha, beeSpiralAxisBeta] = randomCrosses(beeDirection)
-    burnRateRandoms.push(Math.random())
-    speedRandoms.push(Math.random())
-    frictionRandoms.push(Math.random())
-    beeStartRandoms.push(Math.random())
-    beeSpeedRandoms.push(Math.random())
-    beeDecayRandoms.push(Math.random())
-    beeSpiralFreqRandoms.push(Math.random())
+    burnRateRandoms.push(Math.random() - 0.5)
+    speedRandoms.push(Math.random() - 0.5)
+    frictionRandoms.push(Math.random() - 0.5)
+    beeStartRandoms.push(Math.random() - 0.5)
+    beeSpeedRandoms.push(Math.random() - 0.5)
+    beeDecayRandoms.push(Math.random() - 0.5)
     beeDirections.push(beeDirection)
-    beeSpiralAxisAlphas.push(beeSpiralAxisAlpha)
-    beeSpiralAxisBetas.push(beeSpiralAxisBeta)
   }
   return {
     size,
@@ -51,10 +44,7 @@ export function generateStarBaseAttributes(size: number) {
     beeStartRandoms,
     beeDirections,
     beeSpeedRandoms,
-    beeDecayRandoms,
-    beeSpiralFreqRandoms,
-    beeSpiralAxisAlphas,
-    beeSpiralAxisBetas
+    beeDecayRandoms
   }
 }
 
@@ -69,14 +59,14 @@ export function generateStarParticleAttributes(size: number) {
   const particleFrictionRandoms: number[] = []
   const particleDurationRandoms: number[] = []
   for (let i = 0; i < size; i++) {
-    blinkStartRandoms.push(Math.random())
+    blinkStartRandoms.push(Math.random() - 0.5)
     blinkPhases.push(Math.random())
-    blinkRateRandoms.push(Math.random())
+    blinkRateRandoms.push(Math.random() - 0.5)
     particleDirections.push(sphereSurfaceRandom())
-    particlePhaseRandoms.push(Math.random())
-    particleSpeedRandoms.push(Math.random())
-    particleFrictionRandoms.push(Math.random())
-    particleDurationRandoms.push(Math.random())
+    particlePhaseRandoms.push(Math.random() - 0.5)
+    particleSpeedRandoms.push(Math.random() - 0.5)
+    particleFrictionRandoms.push(Math.random() - 0.5)
+    particleDurationRandoms.push(Math.random() - 0.5)
   }
   return {
     size,
@@ -99,10 +89,7 @@ const {
     beeStartRandoms,
     beeDirections,
     beeSpeedRandoms,
-    beeDecayRandoms,
-    beeSpiralFreqRandoms,
-    beeSpiralAxisAlphas,
-    beeSpiralAxisBetas
+    beeDecayRandoms
   } = attrs
   function set(name: string, arr: number[], n: 1 | 3) {
     if (geometry instanceof THREE.InstancedBufferGeometry) {
@@ -131,9 +118,6 @@ const {
   add3('beeDirection', beeDirections)
   add1('beeSpeedRandom', beeSpeedRandoms)
   add1('beeDecayRandom', beeDecayRandoms)
-  add1('beeSpiralFreqRandom', beeSpiralFreqRandoms)
-  add3('beeSpiralAxisAlpha', beeSpiralAxisAlphas)
-  add3('beeSpiralAxisBeta', beeSpiralAxisBetas)
 }
 
 export function setStarParticleAttributes(geometry: THREE.BufferGeometry | THREE.InstancedBufferGeometry, attrs: StarParticleAttributes) {
