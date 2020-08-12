@@ -69,7 +69,6 @@ export function evenSpherePoints(step: number, randomness: number = 0) { // N = 
     p[1] = y / r
     p[2] = z / r
   })
-  randomRotatePoints(points)
   return points
 }
 
