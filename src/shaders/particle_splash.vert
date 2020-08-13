@@ -2,8 +2,7 @@
 #include <base_params>
 #include <blink_params>
 #include <particle_params>
-const float size = 0.01;
-const float resolution = 800.0;
+
 varying float brightness;
 
 void main() {

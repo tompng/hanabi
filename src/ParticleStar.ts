@@ -11,13 +11,14 @@ type ParticleStarParams = {
   blink?: ShaderBlinkParams
   stop?: ShaderStopParams
   particle: ShaderParticleParams
+  size: number
 }
 
 export class ParticleTailStar {
   time: { value: number }
   mesh: THREE.Points
-  constructor(geom: THREE.BufferGeometry, { base, bee, stop, blink, particle }: ParticleStarParams) {
-    const uniforms = buildUniforms({ base, bee, blink, stop, particle })
+  constructor(geom: THREE.BufferGeometry, { base, bee, stop, blink, particle, size }: ParticleStarParams) {
+    const uniforms = { ...buildUniforms({ base, bee, blink, stop, particle }), size: { value: size } }
     this.time = uniforms.time
     const material = new THREE.ShaderMaterial({
       defines: { BLINK: !!blink, BEE: !!bee, STOP: !!stop },
@@ -37,8 +38,8 @@ export class ParticleTailStar {
 export class ParticleSplashStar {
   time: { value: number }
   mesh: THREE.Points
-  constructor(geom: THREE.BufferGeometry, { base, bee, blink, particle, stop }: ParticleStarParams & { stop: ShaderStopParams }) {
-    const uniforms = buildUniforms({ base, bee, blink, stop, particle })
+  constructor(geom: THREE.BufferGeometry, { base, bee, blink, particle, stop, size }: ParticleStarParams & { stop: ShaderStopParams }) {
+    const uniforms = {... buildUniforms({ base, bee, blink, stop, particle }), size: { value: size } }
     this.time = uniforms.time
     const material = new THREE.ShaderMaterial({
       defines: { BLINK: !!blink, BEE: !!bee, STOP: true },

@@ -139,10 +139,10 @@ const baseParams: ShaderBaseParams = {
   baseVelocity: new THREE.Vector3(0, 0, 0),
   speed: 4,
   friction: 4,
-  duration: 0.6,
+  duration: 0.8,
   speedRandomness: 0.1,
   frictionRandomness: 0.4,
-  burnRateRandomness: 0.2
+  burnRateRandomness: 0.4
 }
 
 const stopParams: ShaderStopParams = {
@@ -164,7 +164,7 @@ const particleTailParams: ShaderParticleParams = {
 const particleSplashParams: ShaderParticleParams = {
   speed: 0.4,
   friction: 8,
-  duration: 0.2
+  duration: 0.15
 }
 
 const curveGeom = generateCurveStarGeometry(direction, attributes)
@@ -179,11 +179,11 @@ const pstar = new PointStar(pointGeom, { base: baseParams, bee: beeParams, stop:
 scene.add(pstar.mesh)
 updatables.push(pstar)
 
-const tstar = new ParticleTailStar(particleGeom, { base: baseParams, bee: beeParams, stop: stopParams, particle: particleTailParams })
+const tstar = new ParticleTailStar(particleGeom, { base: baseParams, bee: beeParams, stop: stopParams, particle: particleTailParams, size: 0.01 })
 scene.add(tstar.mesh)
 updatables.push(tstar)
 
-const sstar = new ParticleSplashStar(particleGeom, { base: baseParams, bee: beeParams, stop: stopParams, particle: particleSplashParams })
+const sstar = new ParticleSplashStar(particleGeom, { base: baseParams, bee: beeParams, stop: stopParams, particle: particleSplashParams, size: 0.005 })
 scene.add(sstar.mesh)
 updatables.push(sstar)
 
