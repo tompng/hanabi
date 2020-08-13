@@ -15,7 +15,7 @@ void main(){
   #endif
   float t = position.x;
   float u = position.y;
-  vec3 v0 = velocityScale * direction * (1.0 + speedRandom * speedRandomness);
+  vec3 v0 = speed * direction * (1.0 + speedRandom * speedRandomness);
   #ifdef ROTATION
     v0 = rotationMatrix * v0;
   #endif

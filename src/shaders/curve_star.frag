@@ -1,4 +1,4 @@
-uniform vec3 color;
+const vec3 color = vec3(1,1,1);
 varying vec2 coord;
 varying float brightness;
 void main(){

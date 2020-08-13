@@ -4,16 +4,15 @@
 #include <particle_params>
 const float size = 0.01;
 const float resolution = 800.0;
-const float splashTime = 0.4;
 varying float brightness;
 
 void main() {
   float burnRate = 1.0 + burnRateRandom * burnRateRandomness;
   float pduration = particleDuration * (1.0 + particleDurationRandom * particleDurationRandomness);
-  float stime = splashTime * burnRate;
+  float stime = stopTime * burnRate;
   float t2 = time - stime;
   if (t2 < 0.0 || pduration < t2) return;
-  vec3 v0 = velocityScale * direction * (1.0 + speedRandom * speedRandomness);
+  vec3 v0 = speed * direction * (1.0 + speedRandom * speedRandomness);
   #ifdef ROTATION
     v0 = rotationMatrix * v0;
   #endif

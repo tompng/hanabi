@@ -2,28 +2,32 @@ import * as THREE from 'three'
 import type { N3D } from './util'
 import vertexShader from './shaders/curve_star.vert'
 import fragmentShader from './shaders/curve_star.frag'
-import { setStarBaseAttributes, StarBaseAttributes } from './attributes'
+import { setStarBaseAttributes, StarBaseAttributes, ShaderBeeParams, ShaderStopParams, buildUniforms, ShaderBaseParams } from './attributes'
 
 const lineAttributes: Record<number, THREE.BufferAttribute | undefined> = {}
 
+type CurveStarParams = {
+  base: ShaderBaseParams
+  stop?: ShaderStopParams
+  bee?: ShaderBeeParams
+  widthStart: number
+  widthEnd: number
+  curveDelay: number
+}
 export class CurveStar {
-  uniforms = {
-    time: { value: 0 },
-    color: { value: new THREE.Color('#642') },
-    center: { value: new THREE.Vector3(0, 0, 2) },
-    baseVelocity: { value: new THREE.Vector3(0, 0, 0) },
-    velocityScale: { value: 4.0 },
-    friction: { value: 4 },
-    widthStart: { value: 0.02 },
-    widthEnd: { value: 0.005 },
-    duration: { value: 0.6 },
-    curveDelay: { value: 0.1 }
-  }
+  time: { value: number }
   mesh: THREE.Mesh
-  constructor(geometry: THREE.BufferGeometry) {
+  constructor(geometry: THREE.BufferGeometry, { base, stop, bee, widthStart, widthEnd, curveDelay }: CurveStarParams) {
+    const uniforms = {
+      ...buildUniforms({ base, stop, bee }),
+      widthStart: { value: widthStart },
+      widthEnd: { value: widthEnd },
+      curveDelay: { value: curveDelay }
+    }
+    this.time = uniforms.time
     const material = new THREE.ShaderMaterial({
-      defines: { BEE: true, STOP: true },
-      uniforms: this.uniforms,
+      defines: { BEE: !!bee, STOP: !!stop },
+      uniforms: uniforms as any,
       vertexShader: vertexShader,
       fragmentShader: fragmentShader,
       blending: THREE.AdditiveBlending,
@@ -32,7 +36,7 @@ export class CurveStar {
     this.mesh = new THREE.Mesh(geometry, material)
   }
   update(time: number) {
-    this.uniforms.time.value = time
+    this.time.value = time
   }
 }
 

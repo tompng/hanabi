@@ -1,6 +1,89 @@
 import * as THREE from 'three'
 import { N3D, sphereSurfaceRandom } from './util'
 
+export type ShaderBaseParams = {
+  center: THREE.Vector3
+  baseVelocity: THREE.Vector3
+  speed: number
+  friction: number
+  duration: number
+  rotation?: THREE.Matrix3
+  speedRandomness?: number;
+  frictionRandomness?: number
+  burnRateRandomness?: number
+}
+export type ShaderStopParams = {
+  time: number
+}
+export type ShaderBlinkParams = {
+  start: number
+  rate: number
+  rateRandomness?: number
+}
+export type ShaderBeeParams = {
+  decay: number
+  speed: number
+  start: number
+  decayRandomness?: number
+  speedRandomness?: number
+}
+export type ShaderParticleParams = {
+  speed: number
+  friction: number
+  duration: number
+  speedRandomness?: number
+  frictionRandomness?: number
+  durationRandomness?: number
+}
+export type ShaderParams = {
+  base: ShaderBaseParams
+  stop?: ShaderStopParams
+  blink?: ShaderBlinkParams
+  bee?: ShaderBeeParams
+  particle?: ShaderParticleParams
+}
+export function buildUniforms({ base, stop, blink, bee, particle }: ShaderParams) {
+  const stopUniforms = stop ? { stopTime: { value: stop.time } } : {}
+  const blinkUniforms = blink ? {
+    blinkStart: { value: blink.start },
+    blinkRate: { value: blink.rate },
+    blinkRateRandomness: { value: blink.rateRandomness ?? 0 },
+  } : {}
+  const beeUniforms = bee ? {
+    beeDecay: { value: bee.decay },
+    beeSpeed: { value: bee.speed },
+    beeStart: { value: bee.start },
+    beeDecayRandomness: { value: bee.decayRandomness ?? 0 },
+    beeSpeedRandomness: { value: bee.speedRandomness ?? 0 }
+  } : {}
+  const particleUniforms = particle ? {
+    particleSpeed: { value: particle.speed },
+    particleFriction: { value: particle.friction },
+    particleDuration: { value: particle.duration },
+    particleSpeedRandomness: { value: particle.speedRandomness ?? 0 },
+    particleFrictionRandomness: { value: particle.frictionRandomness ?? 0 },
+    particleDurationRandomness: { value: particle.durationRandomness ?? 0 },
+  } : {}
+  const rotationUniforms = {}//base.rotation ? { value: base.rotation } : {}
+  return {
+    time: { value: 0 },
+    center: { value: base.center },
+    baseVelocity: { value: base.baseVelocity },
+    speed: { value: base.speed },
+    friction: { value: base.friction },
+    duration: { value: base.duration },
+    speedRandomness: { value: base.speedRandomness ?? 0 },
+    frictionRandomness: { value: base.frictionRandomness ?? 0 },
+    burnRateRandomness: { value: base.burnRateRandomness ?? 0 },
+    ...rotationUniforms,
+    ...stopUniforms,
+    ...blinkUniforms,
+    ...beeUniforms,
+    ...particleUniforms
+  }
+}
+
+
 function randomCrosses([nx, ny, nz]: N3D): [N3D, N3D] {
   let [ax, ay, az] = sphereSurfaceRandom()
   const dot = ax * nx + ay * ny + az * nz

@@ -2,23 +2,24 @@ import * as THREE from 'three'
 import type { N3D } from './util'
 import vertexShader from './shaders/point_star.vert'
 import fragmentShader from './shaders/point_star.frag'
-import { StarBaseAttributes, setStarBaseAttributes, setStarBaseBlinkAttributes } from './attributes'
+import { StarBaseAttributes, setStarBaseAttributes, setStarBaseBlinkAttributes, ShaderBaseParams, ShaderBeeParams, ShaderBlinkParams, buildUniforms, ShaderStopParams } from './attributes'
+
+type PointStarParams = {
+  base: ShaderBaseParams
+  stop?: ShaderStopParams
+  bee?: ShaderBeeParams
+  blink?: ShaderBlinkParams
+}
 
 export class PointStar {
-  uniforms = {
-    time: { value: 0 },
-    color: { value: new THREE.Color('#642') },
-    center: { value: new THREE.Vector3(0, 0, 2) },
-    baseVelocity: { value: new THREE.Vector3(0, 0, 0) },
-    velocityScale: { value: 4.0 },
-    friction: { value: 4 },
-    duration: { value: 0.6 }
-  }
+  time: { value: number }
   mesh: THREE.Points
-  constructor(geom: THREE.BufferGeometry) {
+  constructor(geom: THREE.BufferGeometry, { base, stop, bee, blink }: PointStarParams) {
+    const uniforms = buildUniforms({ base, stop, bee, blink })
+    this.time = uniforms.time
     const material = new THREE.ShaderMaterial({
-      defines: { BLINK: false, BEE: true, STOP: true },
-      uniforms: this.uniforms,
+      defines: { BLINK: !!blink, BEE: !!bee, STOP: !!stop },
+      uniforms: uniforms as any,
       vertexShader: vertexShader,
       fragmentShader: fragmentShader,
       blending: THREE.AdditiveBlending,
@@ -27,7 +28,7 @@ export class PointStar {
     this.mesh = new THREE.Points(geom, material)
   }
   update(time: number) {
-    this.uniforms.time.value = time
+    this.time.value = time
   }
 }
 

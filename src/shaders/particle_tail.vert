@@ -9,7 +9,7 @@ varying float brightness;
 void main() {
   float burnRate = 1.0 + burnRateRandom * burnRateRandomness;
   if (time > duration * burnRate) return;
-  vec3 v0 = velocityScale * direction * (1.0 + speedRandom * speedRandomness);
+  vec3 v0 = speed * direction * (1.0 + speedRandom * speedRandomness);
   #ifdef ROTATION
     v0 = rotationMatrix * v0;
   #endif

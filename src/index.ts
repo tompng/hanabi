@@ -10,7 +10,7 @@ import { PointStar, generatePointStarGeometry } from './PointStar'
 import { ParticleTailStar, ParticleSplashStar, generateParticleStarGeometry } from './ParticleStar'
 import { N3D, sphereRandom, evenSpherePoints } from './util'
 import { createRenderTarget, Smoother } from './smoother'
-import { generateStarBaseAttributes } from './attributes'
+import { generateStarBaseAttributes, ShaderBaseParams, ShaderStopParams, ShaderBeeParams, ShaderParticleParams } from './attributes'
 
 THREE.ShaderChunk['hanabi_util'] = hanabiUtilChunk
 THREE.ShaderChunk['base_params'] = baseParamsChunk
@@ -134,24 +134,56 @@ function generateGeometry(size: number) {
 
 const direction = evenSpherePoints(3, 0.5)
 const attributes = generateStarBaseAttributes(direction.length)
+const baseParams: ShaderBaseParams = {
+  center: new THREE.Vector3(0, 0, 2),
+  baseVelocity: new THREE.Vector3(0, 0, 0),
+  speed: 4,
+  friction: 4,
+  duration: 0.6,
+  speedRandomness: 0.1,
+  frictionRandomness: 0.4,
+  burnRateRandomness: 0.2
+}
+
+const stopParams: ShaderStopParams = {
+  time: 0.4
+}
+const beeParams: ShaderBeeParams = {
+  start: 0.1,
+  decay: 16.0,
+  speed: 8.0,
+  decayRandomness: 0.2,
+  speedRandomness: 0.2
+}
+const particleTailParams: ShaderParticleParams = {
+  speed: 0.5,
+  friction: 32,
+  duration: 0.1,
+  durationRandomness: 0.5
+}
+const particleSplashParams: ShaderParticleParams = {
+  speed: 0.4,
+  friction: 8,
+  duration: 0.2
+}
 
 const curveGeom = generateCurveStarGeometry(direction, attributes)
 const pointGeom = generatePointStarGeometry(direction, attributes)
 const particleGeom = generateParticleStarGeometry(direction, attributes, 64)
 
-const cstar = new CurveStar(curveGeom)
+const cstar = new CurveStar(curveGeom, { base: baseParams, bee: beeParams, stop: stopParams, widthStart: 0.02, widthEnd: 0.005, curveDelay: 0.1 })
 scene.add(cstar.mesh)
 updatables.push(cstar)
 
-const pstar = new PointStar(pointGeom)
+const pstar = new PointStar(pointGeom, { base: baseParams, bee: beeParams, stop: stopParams })
 scene.add(pstar.mesh)
 updatables.push(pstar)
 
-const tstar = new ParticleTailStar(particleGeom)
+const tstar = new ParticleTailStar(particleGeom, { base: baseParams, bee: beeParams, stop: stopParams, particle: particleTailParams })
 scene.add(tstar.mesh)
 updatables.push(tstar)
 
-const sstar = new ParticleSplashStar(particleGeom)
+const sstar = new ParticleSplashStar(particleGeom, { base: baseParams, bee: beeParams, stop: stopParams, particle: particleSplashParams })
 scene.add(sstar.mesh)
 updatables.push(sstar)
 
