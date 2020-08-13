@@ -7,7 +7,7 @@ import starVertexShader from './shaders/star.vert'
 import starFragmentShader from './shaders/star.frag'
 import { CurveStar } from './CurveStar'
 import { PointStar } from './PointStar'
-import { ParticleTailStar } from './ParticleTailStar'
+import { ParticleTailStar, ParticleSplashStar } from './ParticleStar'
 import { N3D, sphereRandom, evenSpherePoints } from './util'
 import { createRenderTarget, Smoother } from './smoother'
 import { generateStarBaseAttributes } from './attributes'
@@ -146,6 +146,10 @@ updatables.push(pstar)
 const tstar = new ParticleTailStar(direction, attributes)
 scene.add(tstar.mesh)
 updatables.push(tstar)
+
+const sstar = new ParticleSplashStar(direction, attributes)
+scene.add(sstar.mesh)
+updatables.push(sstar)
 
 const points = evenSpherePoints(5, 0.5)
 points.forEach(p => {

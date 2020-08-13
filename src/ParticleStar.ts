@@ -1,6 +1,7 @@
 import * as THREE from 'three'
 import type { N3D } from './util'
-import vertexShader from './shaders/particle_tail.vert'
+import tailVertexShader from './shaders/particle_tail.vert'
+import splashVertexShader from './shaders/particle_splash.vert'
 import fragmentShader from './shaders/point_star.frag'
 import { StarBaseAttributes, setStarBaseAttributes, generateStarParticleAttributes, setStarParticleAttributes } from './attributes'
 
@@ -19,8 +20,35 @@ export class ParticleTailStar {
     const material = new THREE.ShaderMaterial({
       defines: { BEE: true, BLINK: false },
       uniforms: this.uniforms,
-      vertexShader: vertexShader,
-      fragmentShader: fragmentShader,
+      vertexShader: tailVertexShader,
+      fragmentShader,
+      blending: THREE.AdditiveBlending,
+      depthWrite: false,
+    })
+    this.mesh = new THREE.Points(generateGeometry(direction, attrs), material)
+  }
+  update(time: number) {
+    this.uniforms.time.value = time
+  }
+}
+
+export class ParticleSplashStar {
+  uniforms = {
+    time: { value: 0 },
+    color: { value: new THREE.Color('#642') },
+    center: { value: new THREE.Vector3(0, 0, 2) },
+    baseVelocity: { value: new THREE.Vector3(0, 0, 0) },
+    velocityScale: { value: 4.0 },
+    friction: { value: 4 },
+    duration: { value: 0.6 }
+  }
+  mesh: THREE.Points
+  constructor(direction: N3D[], attrs: StarBaseAttributes) {
+    const material = new THREE.ShaderMaterial({
+      defines: { BEE: true, BLINK: true },
+      uniforms: this.uniforms,
+      vertexShader: splashVertexShader,
+      fragmentShader,
       blending: THREE.AdditiveBlending,
       depthWrite: false,
     })
