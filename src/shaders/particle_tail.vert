@@ -32,8 +32,8 @@ void main() {
   brightness = max(1.0 - time / duration / burnRate, 0.0) * fPointSize / gl_PointSize * (1.0 - t2 / rate);
   #ifdef BLINK
     if (time > blinkStart * burnRate) {
-      float t = time / blinkRate / (1.0 + blinkRateRandom * blinkRateRandomness) - blinkPhase;
-      brightness *= step(0.5, t - floor(t));
+      float t = t2 / blinkRate / (1.0 + blinkRateRandom * blinkRateRandomness) - blinkPhase;
+      if (t - floor(t) < 0.5) return;
     }
   #endif
   brightness *= 0.4;

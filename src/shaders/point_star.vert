@@ -25,7 +25,7 @@ void main() {
   #ifdef BLINK
     if (time > blinkStart * burnRate) {
       float t = time / blinkRate / (1.0 + blinkRateRandom * blinkRateRandomness) - blinkPhase;
-      brightness *= step(0.5, t - floor(t));
+      if (t - floor(t) < 0.5) return;
     }
   #endif
   gl_Position = projectionMatrix * viewMatrix * vec4(gpos, 1);
