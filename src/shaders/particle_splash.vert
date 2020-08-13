@@ -13,7 +13,11 @@ void main() {
   float stime = splashTime * burnRate;
   float t2 = time - stime;
   if (t2 < 0.0 || pduration < t2) return;
-  vec3 v0 = baseVelocity + velocityScale * direction * (1.0 + speedRandom * speedRandomness);
+  vec3 v0 = velocityScale * direction * (1.0 + speedRandom * speedRandomness);
+  #ifdef ROTATION
+    v0 = rotationMatrix * v0;
+  #endif
+  v0 += baseVelocity;
   float friction2 = friction * (1.0 + frictionRandom * frictionRandomness);
   vec3 pv0 = velocityAt(v0, friction2, stime) + particleDirection * particleSpeed * (1.0 + particleSpeedRandom * particleSpeedRandomness);
   float pfriction2 = particleFriction * (1.0 + particleFrictionRandom * particleFrictionRandomness);

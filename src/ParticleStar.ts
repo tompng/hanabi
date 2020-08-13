@@ -16,16 +16,16 @@ export class ParticleTailStar {
     duration: { value: 0.6 }
   }
   mesh: THREE.Points
-  constructor(direction: N3D[], attrs: StarBaseAttributes) {
+  constructor(geom: THREE.BufferGeometry) {
     const material = new THREE.ShaderMaterial({
-      defines: { BEE: true, BLINK: false },
+      defines: { BEE: true, BLINK: false, STOP: true },
       uniforms: this.uniforms,
       vertexShader: tailVertexShader,
       fragmentShader,
       blending: THREE.AdditiveBlending,
       depthWrite: false,
     })
-    this.mesh = new THREE.Points(generateGeometry(direction, attrs), material)
+    this.mesh = new THREE.Points(geom, material)
   }
   update(time: number) {
     this.uniforms.time.value = time
@@ -43,7 +43,7 @@ export class ParticleSplashStar {
     duration: { value: 0.6 }
   }
   mesh: THREE.Points
-  constructor(direction: N3D[], attrs: StarBaseAttributes) {
+  constructor(geom: THREE.BufferGeometry) {
     const material = new THREE.ShaderMaterial({
       defines: { BEE: true, BLINK: true },
       uniforms: this.uniforms,
@@ -52,14 +52,14 @@ export class ParticleSplashStar {
       blending: THREE.AdditiveBlending,
       depthWrite: false,
     })
-    this.mesh = new THREE.Points(generateGeometry(direction, attrs), material)
+    this.mesh = new THREE.Points(geom, material)
   }
   update(time: number) {
     this.uniforms.time.value = time
   }
 }
 
-function generateGeometry(direction: N3D[], attrs: StarBaseAttributes, particles: number = 64) {
+export function generateParticleStarGeometry(direction: N3D[], attrs: StarBaseAttributes, particles: number = 64) {
   const geometry = new THREE.BufferGeometry()
   const ds: number[] = []
   direction.forEach(p => {

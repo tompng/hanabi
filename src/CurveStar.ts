@@ -20,16 +20,16 @@ export class CurveStar {
     curveDelay: { value: 0.1 }
   }
   mesh: THREE.Mesh
-  constructor(direction: N3D[], attrs: StarBaseAttributes) {
+  constructor(geometry: THREE.BufferGeometry) {
     const material = new THREE.ShaderMaterial({
-      defines: { BEE: true },
+      defines: { BEE: true, STOP: true },
       uniforms: this.uniforms,
       vertexShader: vertexShader,
       fragmentShader: fragmentShader,
       blending: THREE.AdditiveBlending,
       depthWrite: false,
     })
-    this.mesh = new THREE.Mesh(generateGeometry(direction, attrs), material)
+    this.mesh = new THREE.Mesh(geometry, material)
   }
   update(time: number) {
     this.uniforms.time.value = time
@@ -50,7 +50,7 @@ function generateLineAttributes(step: number) {
   return attr
 }
 
-function generateGeometry(direction: N3D[], attrs: StarBaseAttributes, lineStep: number = 8) {
+export function generateCurveStarGeometry(direction: N3D[], attrs: StarBaseAttributes, lineStep: number = 8) {
   const geometry = new THREE.InstancedBufferGeometry()
   const ds: number[] = []
   direction.forEach(p => ds.push(...p))

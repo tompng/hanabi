@@ -11,6 +11,12 @@ uniform float velocityScale;
 uniform float friction;
 uniform float duration;
 uniform float time;
+#ifdef ROTATION
+uniform mat3 rotationMatrix;
+#endif
+#ifdef STOP
+const float stopTime = 0.4;
+#endif
 #ifdef BEE
 attribute vec3 beeDirection;
 attribute float beeSpeedRandom;

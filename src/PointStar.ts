@@ -15,23 +15,23 @@ export class PointStar {
     duration: { value: 0.6 }
   }
   mesh: THREE.Points
-  constructor(direction: N3D[], attrs: StarBaseAttributes) {
+  constructor(geom: THREE.BufferGeometry) {
     const material = new THREE.ShaderMaterial({
-      defines: { BLINK: false, BEE: true },
+      defines: { BLINK: false, BEE: true, STOP: true },
       uniforms: this.uniforms,
       vertexShader: vertexShader,
       fragmentShader: fragmentShader,
       blending: THREE.AdditiveBlending,
       depthWrite: false,
     })
-    this.mesh = new THREE.Points(generateGeometry(direction, attrs), material)
+    this.mesh = new THREE.Points(geom, material)
   }
   update(time: number) {
     this.uniforms.time.value = time
   }
 }
 
-function generateGeometry(direction: N3D[], attrs: StarBaseAttributes, lineStep: number = 8) {
+export function generatePointStarGeometry(direction: N3D[], attrs: StarBaseAttributes, lineStep: number = 8) {
   const geometry = new THREE.BufferGeometry()
   const ds: number[] = []
   direction.forEach(p => ds.push(...p))

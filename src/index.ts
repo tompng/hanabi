@@ -5,9 +5,9 @@ import blinkParamsChunk from './shaders/blink_params.vert'
 import blinkParticleChunk from './shaders/particle_params.vert'
 import starVertexShader from './shaders/star.vert'
 import starFragmentShader from './shaders/star.frag'
-import { CurveStar } from './CurveStar'
-import { PointStar } from './PointStar'
-import { ParticleTailStar, ParticleSplashStar } from './ParticleStar'
+import { CurveStar, generateCurveStarGeometry } from './CurveStar'
+import { PointStar, generatePointStarGeometry } from './PointStar'
+import { ParticleTailStar, ParticleSplashStar, generateParticleStarGeometry } from './ParticleStar'
 import { N3D, sphereRandom, evenSpherePoints } from './util'
 import { createRenderTarget, Smoother } from './smoother'
 import { generateStarBaseAttributes } from './attributes'
@@ -135,19 +135,23 @@ function generateGeometry(size: number) {
 const direction = evenSpherePoints(3, 0.5)
 const attributes = generateStarBaseAttributes(direction.length)
 
-const cstar = new CurveStar(direction, attributes)
+const curveGeom = generateCurveStarGeometry(direction, attributes)
+const pointGeom = generatePointStarGeometry(direction, attributes)
+const particleGeom = generateParticleStarGeometry(direction, attributes, 64)
+
+const cstar = new CurveStar(curveGeom)
 scene.add(cstar.mesh)
 updatables.push(cstar)
 
-const pstar = new PointStar(direction, attributes)
+const pstar = new PointStar(pointGeom)
 scene.add(pstar.mesh)
 updatables.push(pstar)
 
-const tstar = new ParticleTailStar(direction, attributes)
+const tstar = new ParticleTailStar(particleGeom)
 scene.add(tstar.mesh)
 updatables.push(tstar)
 
-const sstar = new ParticleSplashStar(direction, attributes)
+const sstar = new ParticleSplashStar(particleGeom)
 scene.add(sstar.mesh)
 updatables.push(sstar)
 

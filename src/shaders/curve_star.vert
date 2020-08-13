@@ -6,10 +6,6 @@ uniform float widthEnd;
 varying vec2 coord;
 varying float brightness;
 const float particleFriction = 32.0;
-#define STOP
-#ifdef STOP
-const float stopTime = 0.4;
-#endif
 
 void main(){
   float burnRate = 1.0 + burnRateRandom * burnRateRandomness;
@@ -19,7 +15,11 @@ void main(){
   #endif
   float t = position.x;
   float u = position.y;
-  vec3 v0 = baseVelocity + velocityScale * direction * (1.0 + speedRandom * speedRandomness);
+  vec3 v0 = velocityScale * direction * (1.0 + speedRandom * speedRandomness);
+  #ifdef ROTATION
+    v0 = rotationMatrix * v0;
+  #endif
+  v0 += baseVelocity;
   float delay = t * min(time, curveDelay);
   float t2 = time - delay;
   float friction2 = friction * (1.0 + frictionRandom * frictionRandomness);
