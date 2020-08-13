@@ -6,10 +6,17 @@ uniform float widthEnd;
 varying vec2 coord;
 varying float brightness;
 const float particleFriction = 32.0;
+#define STOP
+#ifdef STOP
+const float stopTime = 0.4;
+#endif
 
 void main(){
   float burnRate = 1.0 + burnRateRandom * burnRateRandomness;
   if (time - curveDelay > duration * burnRate) return;
+  #ifdef STOP
+    if (time - curveDelay > stopTime * burnRate) return;
+  #endif
   float t = position.x;
   float u = position.y;
   vec3 v0 = baseVelocity + velocityScale * direction * (1.0 + speedRandom * speedRandomness);
@@ -32,5 +39,8 @@ void main(){
   vec3 n = normalize(cross(v, gpos - cameraPosition)) * width;
   coord = vec2(2.0 * t - 1.0, u);
   brightness = max(1.0 - time / duration / burnRate, 0.0);
+  #ifdef STOP
+    if (t2 > stopTime * burnRate) brightness = 0.0;
+  #endif
   gl_Position = projectionMatrix * viewMatrix * vec4(gpos + u * n, 1);
 }

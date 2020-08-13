@@ -4,10 +4,17 @@
 const float size = 0.02;
 const float resolution = 800.0;
 varying float brightness;
+#define STOP
+#ifdef STOP
+const float stopTime = 0.4;
+#endif
 
 void main() {
   float burnRate = 1.0 + burnRateRandom * burnRateRandomness;
   if (time > duration * burnRate) return;
+  #ifdef STOP
+      if (time > stopTime * burnRate) return;
+  #endif
   vec3 v0 = baseVelocity + velocityScale * direction * (1.0 + speedRandom * speedRandomness);
   float friction2 = friction * (1.0 + frictionRandom * frictionRandomness);
   vec3 gpos = center + positionAt(v0, friction2, time);

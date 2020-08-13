@@ -5,6 +5,10 @@
 const float size = 0.01;
 const float resolution = 800.0;
 varying float brightness;
+#define STOP
+#ifdef STOP
+const float stopTime = 0.4;
+#endif
 
 void main() {
   float burnRate = 1.0 + burnRateRandom * burnRateRandomness;
@@ -16,6 +20,9 @@ void main() {
   float t = rate * floor(t2 / rate) - particlePhase * rate;
   t2 = time - t;
   if (t < 0.0) return;
+  #ifdef STOP
+    if (t > stopTime * burnRate) return;
+  #endif
   vec3 pv0 = velocityAt(v0, friction2, t) + particleDirection * particleSpeed * (1.0 + particleSpeedRandom * particleSpeedRandomness);
   float pfriction2 = particleFriction * (1.0 + particleFrictionRandom * particleFrictionRandomness);
   vec3 gpos = center + positionAt(v0, friction2, t) + positionAt(pv0, pfriction2, t2);
