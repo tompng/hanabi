@@ -159,7 +159,7 @@ const particleSplashParams: ShaderParticleParams = {
 }
 const color1 = [new THREE.Color('#884'), new THREE.Color('#f84'), new THREE.Color('white')]
 const color2 = new THREE.Color('#a66')
-const color3 = [new THREE.Color('white'), new THREE.Color('#44f')]
+const color3 = [new THREE.Color('white'), new THREE.Color('#faa'), new THREE.Color('black')]
 
 const curveGeom = generateCurveStarGeometry(direction, attributes)
 const pointGeom = generatePointStarGeometry(direction, attributes)

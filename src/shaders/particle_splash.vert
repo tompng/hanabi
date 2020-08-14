@@ -34,7 +34,11 @@ void main() {
   float fPointSize = resolution * size / distance(cameraPosition, gpos);
   gl_PointSize = clamp(2.0, fPointSize, 16.0);
   float phase = t2 / pduration;
-  brightness = (1.0 - phase) * fPointSize / gl_PointSize;
+  #ifdef COLORS
+    brightness = fPointSize / gl_PointSize;
+  #else
+    brightness = max(1.0 - t2 / pduration / burnRate, 0.0) * fPointSize / gl_PointSize;
+  #endif
   #ifdef BLINK
     if (time > blinkStart * burnRate) {
       float t = t2 / blinkRate / (1.0 + blinkRateRandom * blinkRateRandomness) - blinkPhase;
