@@ -11,6 +11,7 @@ import { ParticleTailStar, ParticleSplashStar, generateParticleStarGeometry } fr
 import { N3D, sphereRandom, evenSpherePoints } from './util'
 import { createRenderTarget, Smoother } from './smoother'
 import { generateStarBaseAttributes, ShaderBaseParams, ShaderStopParams, ShaderBeeParams, ShaderParticleParams } from './attributes'
+import { Capturer } from './capture'
 
 THREE.ShaderChunk['hanabi_util'] = hanabiUtilChunk
 THREE.ShaderChunk['base_params'] = baseParamsChunk
@@ -37,9 +38,10 @@ document.body.appendChild(canvas)
 type Updatable = { update: (t: number) => void }
 
 const updatables: Updatable[] = []
-const renderTarget = createRenderTarget(256)
+// const renderTarget = createRenderTarget(256)
 const renderTarget2 = createRenderTarget(256)
-const smoother = new Smoother(renderer)
+// const smoother = new Smoother(renderer)
+const capturer = new Capturer(renderer, 800, 600)
 const waveUniforms = { map: { value: renderTarget2.texture }, time: { value: 0 } }
 const plane = new THREE.Mesh(
   new THREE.PlaneGeometry(),
@@ -73,6 +75,18 @@ const plane = new THREE.Mesh(
   })
 )
 scene.add(plane)
+
+let capturing = false
+;(window as any).captureStart = () => {
+  capturing = true
+}
+let captureCanvas = document.createElement('canvas')
+;(window as any).captureStop = () => {
+  capturer.capture(captureCanvas)
+  capturer.reset(0)
+  capturing = false
+  document.body.appendChild(captureCanvas)
+}
 function animate() {
   const time = performance.now() / 1000
   updatables.forEach(h => h.update(time / 4 % 1))
@@ -84,7 +98,9 @@ function animate() {
   // smoother.smooth(renderTarget.texture, renderTarget2, 1 / 256*3)
   // plane.visible = true
   // waveUniforms.time.value = time * 0.5;
-  renderer.render(scene, camera)
+  function render() { renderer.render(scene, camera) }
+  if (capturing) capturer.add(render)
+  else render()
   // plane.visible = false
   requestAnimationFrame(animate)
 }
