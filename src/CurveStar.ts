@@ -18,9 +18,9 @@ type CurveStarParams = {
 export class CurveStar {
   time: { value: number }
   mesh: THREE.Mesh
-  constructor(geometry: THREE.BufferGeometry, { base, stop, bee, widthStart, widthEnd, curveDelay, color }: CurveStarParams) {
+  constructor(geometry: THREE.BufferGeometry, { base, color, stop, bee, widthStart, widthEnd, curveDelay }: CurveStarParams) {
     const uniforms = {
-      ...buildUniforms({ base, stop, bee, color }),
+      ...buildUniforms({ base, color, stop, bee }),
       widthStart: { value: widthStart },
       widthEnd: { value: widthEnd },
       curveDelay: { value: curveDelay }

@@ -27,6 +27,11 @@ export type ShaderBeeParams = {
   decayRandomness?: number
   speedRandomness?: number
 }
+export type ShaderLastFlashParams = {
+  duration: number
+  color: THREE.Color
+  size: number
+}
 export type ShaderParticleParams = {
   speed: number
   friction: number
@@ -42,8 +47,9 @@ export type ShaderParams = {
   blink?: ShaderBlinkParams
   bee?: ShaderBeeParams
   particle?: ShaderParticleParams
+  lastFlash?: ShaderLastFlashParams
 }
-export function buildUniforms({ base, stop, blink, bee, particle, color }: ShaderParams) {
+export function buildUniforms({ base, color, stop, blink, bee, particle, lastFlash }: ShaderParams) {
   const stopUniforms = stop ? { stopTime: { value: stop.time } } : {}
   const blinkUniforms = blink ? {
     blinkStart: { value: blink.start },
@@ -67,6 +73,11 @@ export function buildUniforms({ base, stop, blink, bee, particle, color }: Shade
   } : {}
   const rotationUniforms = base.rotation ? { value: base.rotation } : {}
   const colorUniforms = Array.isArray(color) ? { colors: { value: color } } : { color: { value: color } }
+  const lastFlashUniforms = lastFlash ? {
+    lastFlashDuration: { value: lastFlash.duration },
+    lastFlashColor: { value: lastFlash.color },
+    lastFlashSize: { value: lastFlash.size },
+  } : {}
   return {
     time: { value: 0 },
     center: { value: base.center },
@@ -78,6 +89,7 @@ export function buildUniforms({ base, stop, blink, bee, particle, color }: Shade
     frictionRandomness: { value: base.frictionRandomness ?? 0 },
     burnRateRandomness: { value: base.burnRateRandomness ?? 0 },
     ...colorUniforms,
+    ...lastFlashUniforms,
     ...rotationUniforms,
     ...stopUniforms,
     ...blinkUniforms,
@@ -85,7 +97,6 @@ export function buildUniforms({ base, stop, blink, bee, particle, color }: Shade
     ...particleUniforms
   }
 }
-
 
 function randomCrosses([nx, ny, nz]: N3D): [N3D, N3D] {
   let [ax, ay, az] = sphereSurfaceRandom()

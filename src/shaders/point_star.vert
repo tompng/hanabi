@@ -1,11 +1,17 @@
 #include <hanabi_util>
 #include <base_params>
 #include <blink_params>
-const float size = 0.02;
+uniform float size;
 const float resolution = 800.0;
 varying float brightness;
 #ifdef COLORS
 varying vec3 color;
+#endif
+#ifdef LAST_FLASH
+uniform float lastFlashDuration;
+uniform float lastFlashSize;
+uniform vec3 lastFlashColor;
+varying vec3 lfcolor;
 #endif
 
 void main() {
@@ -29,8 +35,16 @@ void main() {
       gpos += beePositionAt(k, bt) * beeDirection * speed;
     }
   #endif
-  float fPointSize = resolution * size / distance(cameraPosition, gpos);
-  gl_PointSize = clamp(2.0, fPointSize, 16.0);
+  #ifdef LAST_FLASH
+    float lastFlash = clamp((duration - time / burnRate) / lastFlashDuration, 0.0, 1.0);
+    lastFlash *= 4.0 * (1.0 - lastFlash);
+    lastFlash *= lastFlash;
+    lfcolor = lastFlash * lastFlashColor;
+    float fPointSize = (size + lastFlashSize * lastFlash) * resolution / distance(cameraPosition, gpos);
+  #else
+    float fPointSize = size * resolution / distance(cameraPosition, gpos);
+  #endif
+  gl_PointSize = clamp(fPointSize, 2.0, 16.0);
   float phase = time / duration / burnRate;
   brightness = max(1.0 - phase, 0.0) * fPointSize / gl_PointSize;
   #ifdef BLINK

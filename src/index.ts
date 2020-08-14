@@ -136,7 +136,6 @@ const baseParams: ShaderBaseParams = {
   frictionRandomness: 0.4,
   burnRateRandomness: 0.4
 }
-
 const stopParams: ShaderStopParams = {
   time: 0.4
 }
@@ -170,9 +169,13 @@ const cstar = new CurveStar(curveGeom, { base: baseParams, bee: beeParams, stop:
 scene.add(cstar.mesh)
 updatables.push(cstar)
 
-const pstar = new PointStar(pointGeom, { base: baseParams, bee: beeParams, stop: stopParams, color: color1 })
+const pstar = new PointStar(pointGeom, { base: baseParams, bee: beeParams, stop: stopParams, color: color1, size: 0.02 })
 scene.add(pstar.mesh)
 updatables.push(pstar)
+
+const pstar2 = new PointStar(pointGeom, { base: { ...baseParams, friction: 6, burnRateRandomness: 0.1, speedRandomness: 0, frictionRandomness: 0, speed: 6, duration: 0.4 }, color: color3, lastFlash: { duration: 0.1, color: new THREE.Color('white'), size: 0.04 }, size: 0.02 })
+scene.add(pstar2.mesh)
+updatables.push(pstar2)
 
 const tstar = new ParticleTailStar(particleGeom, { base: baseParams, bee: beeParams, stop: stopParams, particle: particleTailParams, size: 0.007, color: color2 })
 scene.add(tstar.mesh)

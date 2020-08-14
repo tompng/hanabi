@@ -2,24 +2,26 @@ import * as THREE from 'three'
 import type { N3D } from './util'
 import vertexShader from './shaders/point_star.vert'
 import fragmentShader from './shaders/point_star.frag'
-import { StarBaseAttributes, setStarBaseAttributes, setStarBaseBlinkAttributes, ShaderBaseParams, ShaderBeeParams, ShaderBlinkParams, buildUniforms, ShaderStopParams } from './attributes'
+import { StarBaseAttributes, setStarBaseAttributes, setStarBaseBlinkAttributes, ShaderBaseParams, ShaderBeeParams, ShaderBlinkParams, buildUniforms, ShaderStopParams, ShaderLastFlashParams } from './attributes'
 
 type PointStarParams = {
   base: ShaderBaseParams
   color: THREE.Color | THREE.Color[]
+  lastFlash?: ShaderLastFlashParams
   stop?: ShaderStopParams
   bee?: ShaderBeeParams
   blink?: ShaderBlinkParams
+  size: number
 }
 
 export class PointStar {
   time: { value: number }
   mesh: THREE.Points
-  constructor(geom: THREE.BufferGeometry, { base, stop, bee, blink, color }: PointStarParams) {
-    const uniforms = buildUniforms({ base, stop, bee, blink, color })
+  constructor(geom: THREE.BufferGeometry, { base, color, lastFlash, stop, bee, blink, size }: PointStarParams) {
+    const uniforms = { ...buildUniforms({ base, color, lastFlash, stop, bee, blink }), size: { value: size } }
     this.time = uniforms.time
     const material = new THREE.ShaderMaterial({
-      defines: { BLINK: !!blink, BEE: !!bee, STOP: !!stop, COLORS: Array.isArray(color) && color.length },
+      defines: { BLINK: !!blink, BEE: !!bee, STOP: !!stop, COLORS: Array.isArray(color) && color.length, LAST_FLASH: !!lastFlash },
       uniforms: uniforms as any,
       vertexShader: vertexShader,
       fragmentShader: fragmentShader,
