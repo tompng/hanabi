@@ -1,5 +1,20 @@
 import * as THREE from 'three'
 
+const renderTargetOption = {
+  minFilter: THREE.NearestFilter,
+  magFilter: THREE.NearestFilter,
+}
+
+const outputRenderTargetOption = {
+  ...renderTargetOption,
+  depthBuffer: false
+}
+const floatRenderTargetOption = {
+  ...renderTargetOption,
+  depthBuffer: false,
+  type: THREE.FloatType
+}
+
 const vertexShader = `
 varying vec2 coord;
 void main() {
@@ -28,21 +43,22 @@ export class Capturer {
     mult1: { value: 0 },
     mult2: { value: 0 }
   }
+  planeGeometry = new THREE.PlaneGeometry()
   input: THREE.WebGLRenderTarget
   output: THREE.WebGLRenderTarget
   constructor(public renderer: THREE.WebGLRenderer, public width: number, public height: number) {
     const plane = new THREE.Mesh(
-      new THREE.PlaneGeometry(),
+      this.planeGeometry,
       new THREE.ShaderMaterial({
         uniforms: this.uniforms,
         vertexShader,
         fragmentShader,
-        depthTest: false
+        depthTest: false,
       })
     )
     this.scene.add(plane)
-    this.input = new THREE.WebGLRenderTarget(width, height)
-    this.output = new THREE.WebGLRenderTarget(width, height)
+    this.input = new THREE.WebGLRenderTarget(width, height, renderTargetOption)
+    this.output = new THREE.WebGLRenderTarget(width, height, outputRenderTargetOption)
   }
   getNewFilm() {
     for (let i = 0; i < this.films.length; i++) {
@@ -50,7 +66,7 @@ export class Capturer {
       if (target.n === 0) return [i, target] as const
     }
     const index = this.films.length
-    const target = { n: 0, target: new THREE.WebGLRenderTarget(this.width, this.height) }
+    const target = { n: 0, target: new THREE.WebGLRenderTarget(this.width, this.height, floatRenderTargetOption) }
     this.films[index] = target
     return [index, target] as const
   }
@@ -59,8 +75,8 @@ export class Capturer {
     let [index, film] = this.getNewFilm()
     const originalRenderTarget = this.renderer.getRenderTarget()
     this.renderer.setRenderTarget(this.input)
-    this.copy(this.input.texture, film.target)
     render()
+    this.copy(this.input.texture, film.target)
     film.n = 1
     while (index > 0 && this.films[index].n === this.films[index - 1].n) {
       const f1 = this.films[index]
@@ -78,13 +94,17 @@ export class Capturer {
     }
     this.renderer.setRenderTarget(originalRenderTarget)
   }
-  reset(n: number) {
+  reset() {
     this.frames = 0
-    this.films.forEach(f => { f.n = 0 })
-    while (this.films.length > n) {
-      const f = this.films.pop()
-      f?.target.dispose()
-    }
+    this.films.forEach(f => f.target.dispose())
+    this.films.length = 0
+  }
+  dispose() {
+    this.reset()
+    this.input.dispose()
+    this.output.dispose()
+    this.planeGeometry.dispose()
+    this.scene.dispose()
   }
   getOutput() {
     const [_i1, f1] = this.getNewFilm()
@@ -99,7 +119,6 @@ export class Capturer {
     index--
     while (index >= 0) {
       let f = this.films[index]
-      const s = this;(window as any).debug2 = (a: string) => eval(a)
       this.mix(out.texture, f.target.texture, n / (n + f.n), f.n / (n + f.n), tmp2)
       out = tmp2
       tmp2 = tmp1
@@ -109,13 +128,14 @@ export class Capturer {
     }
     return out.texture
   }
-  capture(canvas?: HTMLCanvasElement) {
+  capture(canvas: HTMLCanvasElement, brightness: number = 1) {
+    console.log(this.frames, this.films.map(a=>a.n).join('-'))
     const buffer = new Uint8Array(4 * this.width * this.height)
-    this.copy(this.getOutput(), this.output)
+    this.copy(this.getOutput(), this.output, brightness)
     this.renderer.readRenderTargetPixels(this.output, 0, 0, this.width, this.height, buffer)
-    if (!canvas) canvas = document.createElement('canvas')
     canvas.width = this.width
     canvas.height = this.height
+    canvas.getContext('2d')!.fillRect(0,0,800,600)
     const ctx = canvas.getContext('2d')!
     const imgdata = ctx.createImageData(this.width, this.height)
     for (let y = 0; y < this.height; y++) {
@@ -123,7 +143,6 @@ export class Capturer {
       for (let i = 0; i < stride; i++) imgdata.data[y * stride + i] = i % 4 === 3 ? 0xff : buffer[(this.height - y - 1) * stride + i]
     }
     ctx.putImageData(imgdata, 0, 0)
-    return canvas
   }
   mix(map1: THREE.Texture, map2: THREE.Texture, mult1: number, mult2: number, dst: THREE.WebGLRenderTarget | null) {
     const target = this.renderer.getRenderTarget()
@@ -136,8 +155,8 @@ export class Capturer {
     this.uniforms.map1.value = this.uniforms.map2.value = null
     this.renderer.setRenderTarget(target)
   }
-  copy(texture: THREE.Texture, dst: THREE.WebGLRenderTarget | null) {
-    this.mix(texture, texture, 1, 0, dst)
+  copy(texture: THREE.Texture, dst: THREE.WebGLRenderTarget | null, brightness: number = 1) {
+    this.mix(texture, texture, brightness, 0, dst)
   }
 }
 

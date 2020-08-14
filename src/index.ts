@@ -38,67 +38,39 @@ document.body.appendChild(canvas)
 type Updatable = { update: (t: number) => void }
 
 const updatables: Updatable[] = []
-// const renderTarget = createRenderTarget(256)
-const renderTarget2 = createRenderTarget(256)
-// const smoother = new Smoother(renderer)
 const capturer = new Capturer(renderer, 800, 600)
-;(window as any).capturer = capturer
-const waveUniforms = { map: { value: renderTarget2.texture }, time: { value: 0 } }
-const plane = new THREE.Mesh(
-  new THREE.PlaneGeometry(),
-  new THREE.ShaderMaterial({
-    uniforms: waveUniforms,
-    vertexShader: `
-      varying vec2 gpos;
-      void main() {
-        gpos = position.xy * 16.0;
-        gl_Position = projectionMatrix * modelViewMatrix * vec4(gpos, 0, 1);
-      }
-    `,
-    fragmentShader: `
-    varying vec2 gpos;
-    uniform sampler2D map;
-    uniform float time;
-      void main() {
-        vec2 gp = gpos * 0.7;
-        vec2 coord = vec2(gl_FragCoord.x / 800.0, 1.0 - gl_FragCoord.y / 600.0);
-        coord.x += 0.002 * (
-        +sin(gp.x * 70.0 + gp.y * 51.3 - time * 1.2)
-        +sin(gp.y * 83.0 - gp.x * 45.2 - time * 1.4)
-        +sin(gp.x * 67.0 + gp.y * 35.3 - time * 1.3)
-        +sin(gp.y * 91.3 - gp.x * 28.2 + time * 1.5)
-        +sin(gp.y * 21.3 - gp.x * 88.2 + time * 1.6)
-        +sin(gp.y * 81.3 - gp.x * 18.2 + time * 1.6));
-        gl_FragColor = texture2D(map, coord) * 0.4;
-      }
-    `,
-    side: THREE.DoubleSide
-  })
-)
-scene.add(plane)
-
 let capturing = false
-;(window as any).captureStart = () => {
+let captureCanvases = [...new Array(4)].map(() => document.createElement('canvas'))
+const button = document.createElement('button')
+button.textContent = 'capture'
+document.body.appendChild(button)
+button.onclick = () => {
+  if (capturing) return
+  captureCanvases.forEach(c => {
+    document.body.appendChild(c)
+    c.style.width = '200px'
+    c.getContext('2d')?.clearRect(0, 0, c.width, c.height)
+  })
   capturing = true
+  let n = 0
+  const timer = setInterval(() => {
+    n++
+    const msecs = [100, 1000, 2000, 4000]
+    const i = msecs.findIndex(v => n == (v / 100))
+    if (i === -1) return
+    const msec = msecs[i]
+    capturer.capture(captureCanvases[i], 4 * Math.pow(msec / 1000, 0.4))
+    if (i === 3) {
+      clearInterval(timer)
+      capturing = false
+      capturer.reset()
+    }
+  }, 100)
 }
-let captureCanvas = document.createElement('canvas')
-;(window as any).captureStop = () => {
-  capturer.capture(captureCanvas)
-  capturer.reset(0)
-  capturing = false
-  document.body.appendChild(captureCanvas)
-}
+
 function animate() {
   const time = performance.now() / 1000
   updatables.forEach(h => h.update(time / 4 % 1))
-  // renderer.setRenderTarget(renderTarget)
-  // renderer.render(scene, camera2)
-  // renderer.setRenderTarget(null)
-  // smoother.smooth(renderTarget.texture, renderTarget2, 1 / 256)
-  // smoother.smooth(renderTarget2.texture, renderTarget, 1 / 256*1.5)
-  // smoother.smooth(renderTarget.texture, renderTarget2, 1 / 256*3)
-  // plane.visible = true
-  // waveUniforms.time.value = time * 0.5;
   function render() { renderer.render(scene, camera) }
   if (capturing) {
     capturer.add(render)
@@ -106,7 +78,6 @@ function animate() {
   } else {
     render()
   }
-  // plane.visible = false
   requestAnimationFrame(animate)
 }
 function sample<T>(arr: T[]): T {
