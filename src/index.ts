@@ -42,6 +42,7 @@ const updatables: Updatable[] = []
 const renderTarget2 = createRenderTarget(256)
 // const smoother = new Smoother(renderer)
 const capturer = new Capturer(renderer, 800, 600)
+;(window as any).capturer = capturer
 const waveUniforms = { map: { value: renderTarget2.texture }, time: { value: 0 } }
 const plane = new THREE.Mesh(
   new THREE.PlaneGeometry(),
@@ -99,8 +100,12 @@ function animate() {
   // plane.visible = true
   // waveUniforms.time.value = time * 0.5;
   function render() { renderer.render(scene, camera) }
-  if (capturing) capturer.add(render)
-  else render()
+  if (capturing) {
+    capturer.add(render)
+    capturer.copy(capturer.input.texture, null)
+  } else {
+    render()
+  }
   // plane.visible = false
   requestAnimationFrame(animate)
 }
