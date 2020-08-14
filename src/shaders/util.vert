@@ -28,7 +28,7 @@ vec2 spiralVelocityAt(float k, float w, float t) {
 #ifdef COLORS
 uniform vec3[COLORS] colors;
 vec3 interpolateColor(float t) {
-  float t2 = t * float(COLORS);
+  float t2 = t * float(COLORS - 1);
   int i = clamp(int(t2), 0, COLORS - 2);
   return mix(colors[i], colors[i + 1], smoothstep(0.0, 1.0, t2 - float(i)));
 }

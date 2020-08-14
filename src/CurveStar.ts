@@ -8,6 +8,7 @@ const lineAttributes: Record<number, THREE.BufferAttribute | undefined> = {}
 
 type CurveStarParams = {
   base: ShaderBaseParams
+  color: THREE.Color | THREE.Color[]
   stop?: ShaderStopParams
   bee?: ShaderBeeParams
   widthStart: number
@@ -17,16 +18,16 @@ type CurveStarParams = {
 export class CurveStar {
   time: { value: number }
   mesh: THREE.Mesh
-  constructor(geometry: THREE.BufferGeometry, { base, stop, bee, widthStart, widthEnd, curveDelay }: CurveStarParams) {
+  constructor(geometry: THREE.BufferGeometry, { base, stop, bee, widthStart, widthEnd, curveDelay, color }: CurveStarParams) {
     const uniforms = {
-      ...buildUniforms({ base, stop, bee }),
+      ...buildUniforms({ base, stop, bee, color }),
       widthStart: { value: widthStart },
       widthEnd: { value: widthEnd },
       curveDelay: { value: curveDelay }
     }
     this.time = uniforms.time
     const material = new THREE.ShaderMaterial({
-      defines: { BEE: !!bee, STOP: !!stop, COLORS: Array.isArray(base.color) && base.color.length },
+      defines: { BEE: !!bee, STOP: !!stop, COLORS: Array.isArray(color) && color.length },
       uniforms: uniforms as any,
       vertexShader: vertexShader,
       fragmentShader: fragmentShader,

@@ -6,6 +6,7 @@ import { StarBaseAttributes, setStarBaseAttributes, setStarBaseBlinkAttributes, 
 
 type PointStarParams = {
   base: ShaderBaseParams
+  color: THREE.Color | THREE.Color[]
   stop?: ShaderStopParams
   bee?: ShaderBeeParams
   blink?: ShaderBlinkParams
@@ -14,11 +15,11 @@ type PointStarParams = {
 export class PointStar {
   time: { value: number }
   mesh: THREE.Points
-  constructor(geom: THREE.BufferGeometry, { base, stop, bee, blink }: PointStarParams) {
-    const uniforms = buildUniforms({ base, stop, bee, blink })
+  constructor(geom: THREE.BufferGeometry, { base, stop, bee, blink, color }: PointStarParams) {
+    const uniforms = buildUniforms({ base, stop, bee, blink, color })
     this.time = uniforms.time
     const material = new THREE.ShaderMaterial({
-      defines: { BLINK: !!blink, BEE: !!bee, STOP: !!stop, COLORS: Array.isArray(base.color) && base.color.length },
+      defines: { BLINK: !!blink, BEE: !!bee, STOP: !!stop, COLORS: Array.isArray(color) && color.length },
       uniforms: uniforms as any,
       vertexShader: vertexShader,
       fragmentShader: fragmentShader,

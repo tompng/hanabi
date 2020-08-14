@@ -7,6 +7,7 @@ import { StarBaseAttributes, setStarBaseAttributes, generateStarParticleAttribut
 
 type ParticleStarParams = {
   base: ShaderBaseParams
+  color: THREE.Color | THREE.Color[]
   bee?: ShaderBeeParams
   blink?: ShaderBlinkParams
   stop?: ShaderStopParams
@@ -17,11 +18,11 @@ type ParticleStarParams = {
 export class ParticleTailStar {
   time: { value: number }
   mesh: THREE.Points
-  constructor(geom: THREE.BufferGeometry, { base, bee, stop, blink, particle, size }: ParticleStarParams) {
-    const uniforms = { ...buildUniforms({ base, bee, blink, stop, particle }), size: { value: size } }
+  constructor(geom: THREE.BufferGeometry, { base, bee, stop, blink, particle, size, color }: ParticleStarParams) {
+    const uniforms = { ...buildUniforms({ base, bee, blink, stop, particle, color }), size: { value: size } }
     this.time = uniforms.time
     const material = new THREE.ShaderMaterial({
-      defines: { BLINK: !!blink, BEE: !!bee, STOP: !!stop, COLORS: Array.isArray(base.color) && base.color.length },
+      defines: { BLINK: !!blink, BEE: !!bee, STOP: !!stop, COLORS: Array.isArray(color) && color.length },
       uniforms: uniforms as any,
       vertexShader: tailVertexShader,
       fragmentShader,
@@ -38,11 +39,11 @@ export class ParticleTailStar {
 export class ParticleSplashStar {
   time: { value: number }
   mesh: THREE.Points
-  constructor(geom: THREE.BufferGeometry, { base, bee, blink, particle, stop, size }: ParticleStarParams & { stop: ShaderStopParams }) {
-    const uniforms = {... buildUniforms({ base, bee, blink, stop, particle }), size: { value: size } }
+  constructor(geom: THREE.BufferGeometry, { base, bee, blink, particle, stop, size, color }: ParticleStarParams & { stop: ShaderStopParams }) {
+    const uniforms = {... buildUniforms({ base, bee, blink, stop, particle, color }), size: { value: size } }
     this.time = uniforms.time
     const material = new THREE.ShaderMaterial({
-      defines: { BLINK: !!blink, BEE: !!bee, STOP: true, COLORS: Array.isArray(base.color) && base.color.length },
+      defines: { BLINK: !!blink, BEE: !!bee, STOP: true, COLORS: Array.isArray(color) && color.length },
       uniforms: uniforms as any,
       vertexShader: splashVertexShader,
       fragmentShader,

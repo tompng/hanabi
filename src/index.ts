@@ -134,8 +134,7 @@ const baseParams: ShaderBaseParams = {
   duration: 0.8,
   speedRandomness: 0.1,
   frictionRandomness: 0.4,
-  burnRateRandomness: 0.4,
-  color: [new THREE.Color('#884'), new THREE.Color('#f84'), new THREE.Color('white')]
+  burnRateRandomness: 0.4
 }
 
 const stopParams: ShaderStopParams = {
@@ -159,24 +158,27 @@ const particleSplashParams: ShaderParticleParams = {
   friction: 8,
   duration: 0.15
 }
+const color1 = [new THREE.Color('#884'), new THREE.Color('#f84'), new THREE.Color('white')]
+const color2 = new THREE.Color('#a66')
+const color3 = [new THREE.Color('white'), new THREE.Color('#44f')]
 
 const curveGeom = generateCurveStarGeometry(direction, attributes)
 const pointGeom = generatePointStarGeometry(direction, attributes)
 const particleGeom = generateParticleStarGeometry(direction, attributes, 64)
 
-const cstar = new CurveStar(curveGeom, { base: baseParams, bee: beeParams, stop: stopParams, widthStart: 0.02, widthEnd: 0.005, curveDelay: 0.1 })
+const cstar = new CurveStar(curveGeom, { base: baseParams, bee: beeParams, stop: stopParams, widthStart: 0.02, color: color1, widthEnd: 0.005, curveDelay: 0.1 })
 scene.add(cstar.mesh)
 updatables.push(cstar)
 
-const pstar = new PointStar(pointGeom, { base: baseParams, bee: beeParams, stop: stopParams })
+const pstar = new PointStar(pointGeom, { base: baseParams, bee: beeParams, stop: stopParams, color: color1 })
 scene.add(pstar.mesh)
 updatables.push(pstar)
 
-const tstar = new ParticleTailStar(particleGeom, { base: baseParams, bee: beeParams, stop: stopParams, particle: particleTailParams, size: 0.01 })
+const tstar = new ParticleTailStar(particleGeom, { base: baseParams, bee: beeParams, stop: stopParams, particle: particleTailParams, size: 0.007, color: color2 })
 scene.add(tstar.mesh)
 updatables.push(tstar)
 
-const sstar = new ParticleSplashStar(particleGeom, { base: baseParams, bee: beeParams, stop: stopParams, particle: particleSplashParams, size: 0.005 })
+const sstar = new ParticleSplashStar(particleGeom, { base: baseParams, bee: beeParams, stop: stopParams, particle: particleSplashParams, size: 0.005, color: color3 })
 scene.add(sstar.mesh)
 updatables.push(sstar)
 

@@ -11,7 +11,6 @@ export type ShaderBaseParams = {
   speedRandomness?: number;
   frictionRandomness?: number
   burnRateRandomness?: number
-  color: THREE.Color | THREE.Color[]
 }
 export type ShaderStopParams = {
   time: number
@@ -38,12 +37,13 @@ export type ShaderParticleParams = {
 }
 export type ShaderParams = {
   base: ShaderBaseParams
+  color: THREE.Color | THREE.Color[]
   stop?: ShaderStopParams
   blink?: ShaderBlinkParams
   bee?: ShaderBeeParams
   particle?: ShaderParticleParams
 }
-export function buildUniforms({ base, stop, blink, bee, particle }: ShaderParams) {
+export function buildUniforms({ base, stop, blink, bee, particle, color }: ShaderParams) {
   const stopUniforms = stop ? { stopTime: { value: stop.time } } : {}
   const blinkUniforms = blink ? {
     blinkStart: { value: blink.start },
@@ -66,7 +66,7 @@ export function buildUniforms({ base, stop, blink, bee, particle }: ShaderParams
     particleDurationRandomness: { value: particle.durationRandomness ?? 0 },
   } : {}
   const rotationUniforms = base.rotation ? { value: base.rotation } : {}
-  const colorUniforms = Array.isArray(base.color) ? { colors: { value: base.color } } : { color: { value: base.color } }
+  const colorUniforms = Array.isArray(color) ? { colors: { value: color } } : { color: { value: color } }
   return {
     time: { value: 0 },
     center: { value: base.center },
