@@ -6,6 +6,9 @@ uniform float widthEnd;
 varying vec2 coord;
 varying float brightness;
 const float particleFriction = 32.0;
+#ifdef COLORS
+varying vec3 color;
+#endif
 
 void main(){
   float burnRate = 1.0 + burnRateRandom * burnRateRandomness;
@@ -38,9 +41,13 @@ void main(){
   float width = mix(widthStart, widthEnd, t);
   vec3 n = normalize(cross(v, gpos - cameraPosition)) * width;
   coord = vec2(2.0 * t - 1.0, u);
-  brightness = max(1.0 - time / duration / burnRate, 0.0);
+  float phase = time / duration / burnRate;
+  brightness = max(1.0 - phase, 0.0);
   #ifdef STOP
     if (t2 > stopTime * burnRate) brightness = 0.0;
+  #endif
+  #ifdef COLORS
+    color = interpolateColor(phase);
   #endif
   gl_Position = projectionMatrix * viewMatrix * vec4(gpos + u * n, 1);
 }

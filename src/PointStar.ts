@@ -18,7 +18,7 @@ export class PointStar {
     const uniforms = buildUniforms({ base, stop, bee, blink })
     this.time = uniforms.time
     const material = new THREE.ShaderMaterial({
-      defines: { BLINK: !!blink, BEE: !!bee, STOP: !!stop },
+      defines: { BLINK: !!blink, BEE: !!bee, STOP: !!stop, COLORS: Array.isArray(base.color) && base.color.length },
       uniforms: uniforms as any,
       vertexShader: vertexShader,
       fragmentShader: fragmentShader,

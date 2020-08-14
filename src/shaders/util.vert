@@ -24,3 +24,12 @@ vec2 spiralPositionAt(float k, float w, float t) {
 vec2 spiralVelocityAt(float k, float w, float t) {
   return vec2(k - w * w / k, -2.0 * w) * t * exp(-k * t) * sin(vec2(w * t + pi / 2.0, w * t));
 }
+
+#ifdef COLORS
+uniform vec3[COLORS] colors;
+vec3 interpolateColor(float t) {
+  float t2 = t * float(COLORS);
+  int i = clamp(int(t2), 0, COLORS - 2);
+  return mix(colors[i], colors[i + 1], smoothstep(0.0, 1.0, t2 - float(i)));
+}
+#endif

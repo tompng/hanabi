@@ -4,6 +4,9 @@
 const float size = 0.02;
 const float resolution = 800.0;
 varying float brightness;
+#ifdef COLORS
+varying vec3 color;
+#endif
 
 void main() {
   float burnRate = 1.0 + burnRateRandom * burnRateRandomness;
@@ -28,12 +31,16 @@ void main() {
   #endif
   float fPointSize = resolution * size / distance(cameraPosition, gpos);
   gl_PointSize = clamp(2.0, fPointSize, 16.0);
-  brightness = max(1.0 - time / duration / burnRate, 0.0) * fPointSize / gl_PointSize;
+  float phase = time / duration / burnRate;
+  brightness = max(1.0 - phase, 0.0) * fPointSize / gl_PointSize;
   #ifdef BLINK
     if (time > blinkStart * burnRate) {
       float t = time / blinkRate / (1.0 + blinkRateRandom * blinkRateRandomness) - blinkPhase;
       if (t - floor(t) < 0.5) return;
     }
+  #endif
+  #ifdef COLORS
+    color = interpolateColor(phase);
   #endif
   gl_Position = projectionMatrix * viewMatrix * vec4(gpos, 1);
 }

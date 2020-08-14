@@ -4,6 +4,10 @@
 #include <particle_params>
 
 varying float brightness;
+#ifdef COLORS
+varying vec3 color;
+#endif
+
 
 void main() {
   float burnRate = 1.0 + burnRateRandom * burnRateRandomness;
@@ -35,13 +39,16 @@ void main() {
   #endif
   float fPointSize = resolution * size / distance(cameraPosition, gpos);
   gl_PointSize = clamp(2.0, fPointSize, 16.0);
-  brightness = max(1.0 - time / duration / burnRate, 0.0) * fPointSize / gl_PointSize * (1.0 - t2 / rate);
+  float phase = t / duration / burnRate;
+  brightness = max(1.0 - t / duration / burnRate, 0.0) * fPointSize / gl_PointSize * (1.0 - t2 / rate);
   #ifdef BLINK
-    if (time > blinkStart * burnRate) {
-      float t = t2 / blinkRate / (1.0 + blinkRateRandom * blinkRateRandomness) - blinkPhase;
-      if (t - floor(t) < 0.5) return;
+    if (t > blinkStart * burnRate) {
+      float tb = t2 / blinkRate / (1.0 + blinkRateRandom * blinkRateRandomness) - blinkPhase;
+      if (tb - floor(tb) < 0.5) return;
     }
   #endif
-  brightness *= 0.4;
+  #ifdef COLORS
+    color = interpolateColor(phase);
+  #endif
   gl_Position = projectionMatrix * viewMatrix * vec4(gpos, 1);
 }

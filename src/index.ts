@@ -135,7 +135,7 @@ const baseParams: ShaderBaseParams = {
   speedRandomness: 0.1,
   frictionRandomness: 0.4,
   burnRateRandomness: 0.4,
-  color: new THREE.Color('#f84')
+  color: [new THREE.Color('#884'), new THREE.Color('#f84'), new THREE.Color('white')]
 }
 
 const stopParams: ShaderStopParams = {
