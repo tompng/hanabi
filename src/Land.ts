@@ -1,15 +1,42 @@
+type P3D = { x: number; y: number; z: number }
 type AxisInfo = { min: number; max: number; step: number }
-type Vert = Record<'i' | 'j' | 'x' | 'y' | 'z' | 'nx' | 'ny' | 'nz', number>
-function normalize([nx, ny, nz]: [number, number, number]) {
-  const nr = Math.hypot(nx, ny, nz)
-  return [nx / nr, ny / nr, nz / nr] as const
+type Vert = {
+  i: number
+  j: number
+  x: number
+  y: number
+  z: number
+  n: P3D
 }
-function norm(a: Vert, b: Vert, c: Vert) {
-  return normalize([
-    (b.y - a.y) * (c.z - a.z) - (b.z - a.z) * (c.y - a.y),
-    (b.z - a.z) * (c.x - a.x) - (b.x - a.x) * (c.z - a.z),
-    (b.x - a.x) * (c.y - a.y) - (b.y - a.y) * (c.x - a.x)
-  ])
+function normalize({ x, y, z }: P3D) {
+  const nr = Math.hypot(x, y, z)
+  return { x: x / nr, y: y / nr, z: z / nr }
+}
+
+function norm(a: P3D, b: P3D, c: P3D) {
+  return normalize({
+    x: (b.y - a.y) * (c.z - a.z) - (b.z - a.z) * (c.y - a.y),
+    y: (b.z - a.z) * (c.x - a.x) - (b.x - a.x) * (c.z - a.z),
+    z: (b.x - a.x) * (c.y - a.y) - (b.y - a.y) * (c.x - a.x)
+  })
+}
+function mix2(a: P3D, b: P3D, t: number) {
+  return {
+    x: a.x * (1 - t) + b.x * t,
+    y: a.y * (1 - t) + b.y * t,
+    z: a.z * (1 - t) + b.z * t
+  }
+}
+function wsum3(a: P3D, b: P3D, c: P3D, ta: number, tb: number, tc: number) {
+  return {
+    x: a.x * ta + b.x * tb + c.x * tc,
+    y: a.y * ta + b.y * tb + c.y * tc,
+    z: a.z * ta + b.z * tb + c.z * tc
+  }
+}
+function center3(a: P3D, b: P3D, c: P3D) {
+  const w = 1 / 3
+  return wsum3(a, b, c, w, w, w)
 }
 
 type Triangle = {
@@ -32,31 +59,27 @@ export class Land {
       return [...new Array(yaxis.step + 1)].map((_, j) => {
         const x = i == 0 ? xaxis.min : i == xaxis.step ? xaxis.max : xaxis.min + (xaxis.max - xaxis.min) * (i + 0.1 + 0.8 * Math.random()) / (xaxis.step + 1)
         const y = j == 0 ? yaxis.min : j == yaxis.step ? yaxis.max : yaxis.min + (yaxis.max - yaxis.min) * (j + 0.1 + 0.8 * Math.random()) / (yaxis.step + 1)
-        return { i, j, x, y, z: zfunc(x, y), nx: 0, ny: 0, nz: 0 }
+        return { i, j, x, y, z: zfunc(x, y), n: { x: 0, y: 0, z: 0 } }
       })
     })
     const dirs = [[-1,-1],[0,-1],[1,-1],[1,0],[1,1],[0,1],[-1,1],[-1,0]] as const
     for (let i = 0; i <= xaxis.step; i++) {
       for (let j = 0; j <= yaxis.step; j++) {
         const va = vertices[i][j]
-        let sumnx = 0, sumny = 0, sumnz = 0
+        const sum = { x: 0, y: 0, z: 0 }
         dirs.forEach(([di1, dj1], k) => {
           const [di2, dj2] = dirs[(k + 1) % 8]
           const vb = vertices[i + di1]?.[j + dj1]
           const vc = vertices[i + di2]?.[j + dj2]
           if (!vb || !vc) return
-          const [nx, ny, nz] = norm(va, vb, vc)
-          sumnx += nx
-          sumny += ny
-          sumnz += nz
+          const n = norm(va, vb, vc)
+          sum.x += n.x
+          sum.y += n.y
+          sum.z += n.z
         })
-        const [nx, ny, nz] = normalize([sumnx, sumny, sumnz])
-        va.nx = nx
-        va.ny = ny
-        va.nz = nz
+        va.n = normalize(sum)
       }
     }
-    const triangles: Triangle[] = []
     const tpairs = new Map<string, Vert>()
     const tpkey = (a: Vert, b: Vert) => [a.i, a.j, b.i, b.j].join('-')
     const addTriangle = (a: Vert, b: Vert, c: Vert) => {
@@ -90,34 +113,65 @@ export class Land {
     })
   }
   generateDetailedTriangles() {
-    type P = [number, number]
+    type P = { p: P3D, n: P3D }
+    const vertPositions = new Map<Vert, { p: { x: number, y: number, z: number }, count: number, edge?: true }>()
     const output: [P, P, P][] = []
-    const t = 0.8
-    const s = (1 + t) / 2
-    function f(a: Vert, b: Vert, c: Vert, bc?: Vert) {
-      const ux = (a.x + b.x + c.x) / 3 * (1 - t)
-      const uy = (a.y + b.y + c.y) / 3 * (1 - t)
+    const t = 0.2
+    function f(a: Vert, b: Vert, c: Vert, bc: Vert | undefined, n: P3D) {
+      const center = center3(a, b, c)
+      const pa = { p: mix2(a, center, t), n }
+      const pb = { p: mix2(b, center, t), n }
       if (!bc) {
-        const a2 = { x: a.x * s + (1 - s) * b.x, y: a.y * s + (1 - s) * b.y }
-        const b2 = { x: b.x * s + (1 - s) * a.x, y: b.y * s + (1 - s) * a.y }
-        output.push([[a.x, a.y], [a.x * t + ux, a.y * t + uy], [a2.x, a2.y]])
-        output.push([[a2.x, a2.y], [a.x * t + ux, a.y * t + uy], [b.x * t + ux, b.y * t + uy]])
-        output.push([[a2.x, a2.y], [b.x * t + ux, b.y * t + uy], [b2.x, b2.y]])
-        output.push([[b2.x, b2.y], [b.x * t + ux, b.y * t + uy], [b.x, b.y]])
+        const la = { p: mix2(a, b, t / 2), n }
+        const lb = { p: mix2(b, a, t / 2), n }
+        output.push([pa, lb, pb], [pa, la, lb])
+        const [va, vb] = ([[a, la], [b, lb]] as const).map(([p, l]) => {
+          let v = vertPositions.get(p)
+          if (!v) vertPositions.set(p, v = { p: { x: 0, y: 0, z: 0 }, count: 0 })
+          if (!v.edge) {
+            v.edge = true
+            v.count = v.p.x = v.p.y = v.p.z = 0
+          }
+          v.p.x += l.p.x
+          v.p.y += l.p.y
+          v.p.z += l.p.z
+          v.count++
+          return v.p
+        })
+        output.push([{ p: va, n: a.n }, la, pa])
+        output.push([{ p: vb, n: b.n }, pb, lb])
       } else {
-        const vx = (a.x + b.x + bc.x) / 3 * (1 - t)
-        const vy = (a.y + b.y + bc.y) / 3 * (1 - t)
-        output.push([[a.x * t + ux, a.y * t + uy], [b.x * t + ux, b.y * t + uy], [b.x * t + vx, b.y * t + vy]])
-        output.push([[b.x, b.y], [b.x * t + vx, b.y * t + vy], [b.x * t + ux, b.y * t + uy]])
+        const tcenter = center3(a, b, bc)
+        const tn = norm(a, bc, b)
+        const tpb = { p: mix2(b, tcenter, t), n: tn }
+        output.push([pa, tpb, pb])
+        let vp = vertPositions.get(b)
+        if (!vp) vertPositions.set(b, vp = { p: { x: 0, y: 0, z: 0 }, count: 0 })
+        if (!vp.edge) {
+          vp.p.x += pb.p.x
+          vp.p.y += pb.p.y
+          vp.p.z += pb.p.z
+          vp.count++
+        }
+        output.push([pb, tpb, { p: vp.p, n: b.n }])
       }
     }
     this.baseTriangles.forEach(({ a, b, c, ab, bc, ca }) => {
-      const sx = (a.x + b.x + c.x) / 3 * (1 - t)
-      const sy = (a.y + b.y + c.y) / 3 * (1 - t)
-      output.push([[a.x * t + sx, a.y * t + sy], [b.x * t + sx, b.y * t + sy], [c.x * t + sx, c.y * t + sy]])
-      f(a, b, c, ab)
-      f(b, c, a, bc)
-      f(c, a, b, ca)
+      const center = center3(a, b, c)
+      const n = norm(a, b, c)
+      output.push([
+        { p: mix2(a, center, t), n },
+        { p: mix2(b, center, t), n },
+        { p: mix2(c, center, t), n }
+      ])
+      f(a, b, c, ab, n)
+      f(b, c, a, bc, n)
+      f(c, a, b, ca, n)
+    })
+    vertPositions.forEach(({ p, count }) => {
+      p.x /= count
+      p.y /= count
+      p.z /= count
     })
     return output
   }
@@ -125,12 +179,13 @@ export class Land {
     const canvas = document.createElement('canvas')
     const ctx = canvas.getContext('2d')!
     canvas.width = canvas.height = 2048
+    ctx.lineWidth = 0.2
     ctx.scale(4, 4)
     this.generateDetailedTriangles().forEach(([a, b, c]) => {
       ctx.beginPath()
-      ctx.moveTo(...a)
-      ctx.lineTo(...b)
-      ctx.lineTo(...c)
+      ctx.moveTo(a.p.x, a.p.y)
+      ctx.lineTo(b.p.x, b.p.y)
+      ctx.lineTo(c.p.x, c.p.y)
       ctx.lineJoin = 'round'
       ctx.closePath()
       ctx.globalAlpha = 0.2
