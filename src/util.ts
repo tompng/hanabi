@@ -1,5 +1,9 @@
 export type N3D = [number, number, number]
 
+export function sample<T>(arr: T[]): T {
+  return arr[Math.floor(Math.random() * arr.length)]
+}
+
 export function sphereRandom(): N3D {
   while (true) {
     const x = 2 * Math.random() - 1

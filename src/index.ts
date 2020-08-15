@@ -3,13 +3,10 @@ import hanabiUtilChunk from './shaders/util.vert'
 import baseParamsChunk from './shaders/base_params.vert'
 import blinkParamsChunk from './shaders/blink_params.vert'
 import blinkParticleChunk from './shaders/particle_params.vert'
-import starVertexShader from './shaders/star.vert'
-import starFragmentShader from './shaders/star.frag'
 import { CurveStar, generateCurveStarGeometry } from './CurveStar'
 import { PointStar, generatePointStarGeometry } from './PointStar'
 import { ParticleTailStar, ParticleSplashStar, generateParticleStarGeometry } from './ParticleStar'
-import { N3D, sphereRandom, evenSpherePoints } from './util'
-import { createRenderTarget, Smoother } from './smoother'
+import { evenSpherePoints } from './util'
 import { generateStarBaseAttributes, ShaderBaseParams, ShaderStopParams, ShaderBeeParams, ShaderParticleParams } from './attributes'
 import { Capturer } from './capture'
 
@@ -19,7 +16,7 @@ THREE.ShaderChunk['blink_params'] = blinkParamsChunk
 THREE.ShaderChunk['particle_params'] = blinkParticleChunk
 
 const renderer = new THREE.WebGLRenderer()
-renderer.debug.checkShaderErrors = true // for debug
+// renderer.debug.checkShaderErrors = true
 const width = 800
 const height = 600
 renderer.setSize(width, height)
@@ -80,49 +77,6 @@ function animate() {
     render()
   }
   requestAnimationFrame(animate)
-}
-function sample<T>(arr: T[]): T {
-  return arr[Math.floor(Math.random() * arr.length)]
-}
-const geometries = [...Array(32)].map(() => generateGeometry(64))
-
-class Star {
-  points: THREE.Points
-  uniforms = {
-    time: { value: 0 },
-    velocity: { value: new THREE.Vector3(0, 0, 0) }
-  }
-  constructor([vx, vy, vz]: N3D) {
-    const shader = new THREE.ShaderMaterial({
-      uniforms: this.uniforms,
-      vertexShader: starVertexShader,
-      fragmentShader: starFragmentShader,
-      blending: THREE.AdditiveBlending,
-      depthWrite: false,
-      side: THREE.DoubleSide
-    })
-    const v = 0.98 + 0.04 * Math.random()
-    this.uniforms.velocity.value.x = vx * v
-    this.uniforms.velocity.value.y = vy * v
-    this.uniforms.velocity.value.z = vz * v
-    this.points = new THREE.Points(sample(geometries), shader)
-  }
-  update(time: number) {
-    this.uniforms.time.value = time
-  }
-}
-
-function generateGeometry(size: number) {
-  const positions: number[] = []
-  const randoms: number[] = []
-  const geometry = new THREE.BufferGeometry()
-  for (let i = 0; i < size; i++) {
-    positions.push(...sphereRandom())
-    randoms.push(...sphereRandom())
-  }
-  geometry.setAttribute('position', new THREE.BufferAttribute(new Float32Array(positions), 3))
-  geometry.setAttribute('random', new THREE.BufferAttribute(new Float32Array(randoms), 3))
-  return geometry
 }
 
 const direction = evenSpherePoints(3, 0.5)
@@ -186,10 +140,4 @@ const sstar = new ParticleSplashStar(particleGeom, { base: baseParams, bee: beeP
 scene.add(sstar.mesh)
 updatables.push(sstar)
 
-const points = evenSpherePoints(5, 0.5)
-points.forEach(p => {
-  // const star = new Star(p)
-  // updatables.push(star)
-  // scene.add(star.points)
-})
 animate()
