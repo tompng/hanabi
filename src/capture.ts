@@ -12,7 +12,7 @@ const outputRenderTargetOption = {
 const floatRenderTargetOption = {
   ...renderTargetOption,
   depthBuffer: false,
-  type: THREE.FloatType
+  // type: THREE.FloatType
 }
 
 const vertexShader = `
