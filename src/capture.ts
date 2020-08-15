@@ -129,7 +129,6 @@ export class Capturer {
     return out.texture
   }
   capture(canvas: HTMLCanvasElement, brightness: number = 1) {
-    console.log(this.frames, this.films.map(a=>a.n).join('-'))
     const buffer = new Uint8Array(4 * this.width * this.height)
     this.copy(this.getOutput(), this.output, brightness)
     this.renderer.readRenderTargetPixels(this.output, 0, 0, this.width, this.height, buffer)

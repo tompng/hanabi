@@ -19,6 +19,7 @@ THREE.ShaderChunk['blink_params'] = blinkParamsChunk
 THREE.ShaderChunk['particle_params'] = blinkParticleChunk
 
 const renderer = new THREE.WebGLRenderer()
+renderer.debug.checkShaderErrors = true // for debug
 const width = 800
 const height = 600
 renderer.setSize(width, height)

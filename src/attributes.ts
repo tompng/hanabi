@@ -72,7 +72,14 @@ export function buildUniforms({ base, color, stop, blink, bee, particle, lastFla
     particleDurationRandomness: { value: particle.durationRandomness ?? 0 },
   } : {}
   const rotationUniforms = base.rotation ? { value: base.rotation } : {}
-  const colorUniforms = Array.isArray(color) ? { colors: { value: color } } : { color: { value: color } }
+  const colorUniforms: Record<string, { value: THREE.Color }> = {}
+  if (Array.isArray(color)) {
+    color.forEach((value, index) => {
+      colorUniforms[`color${index}`] = { value }
+    })
+  } else {
+    colorUniforms['color'] = { value: color }
+  }
   const lastFlashUniforms = lastFlash ? {
     lastFlashDuration: { value: lastFlash.duration },
     lastFlashColor: { value: lastFlash.color },
