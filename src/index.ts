@@ -78,7 +78,7 @@ groundScene.add(mesh)
 const camera = new THREE.PerspectiveCamera(75, width / height, 0.01, 32)
 camera.up.set(0, 0, 1)
 camera.position.x = 0
-const cameraR = 2.5 * 3
+const cameraR = 5
 camera.position.y = -cameraR
 ;(camera as any).lookatZ = 1
 renderer.domElement.onmousemove = e => {
@@ -86,8 +86,8 @@ renderer.domElement.onmousemove = e => {
   const th = e.offsetX / 100
   camera.position.x = -r * Math.sin(th)
   camera.position.y = -r * Math.cos(th)
-  camera.position.z = 4 * (1 - e.offsetY / renderer.domElement.offsetWidth)
-  camera.lookAt(0, 0, (camera as any).lookatZ = 4 * (1 - e.offsetY / renderer.domElement.offsetWidth) - 2)
+  camera.position.z = 4 * (1 - e.offsetY / renderer.domElement.offsetHeight)
+  camera.lookAt(0, 0, (camera as any).lookatZ = 1)
 }
 
 camera.position.z = 0.2
