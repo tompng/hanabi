@@ -9,6 +9,35 @@ import { ParticleTailStar, ParticleSplashStar, generateParticleStarGeometry } fr
 import { evenSpherePoints } from './util'
 import { generateStarBaseAttributes, ShaderBaseParams, ShaderStopParams, ShaderBeeParams, ShaderParticleParams } from './attributes'
 import { Capturer } from './capture'
+import { Land } from './Land'
+import { Water } from './Water'
+
+const land = new Land({min: -1, max: 1, step: 32},{min: -1, max: 1, step: 32},0,(x,y)=>0.4 * (1-x**2-y**2) + 0.2 * (1-x)*(1+x)*(1-y)*(1+y)*Math.random())
+const landAttrs = land.generateGeometryAttributes()
+const landGeometry = new THREE.BufferGeometry()
+landGeometry.setAttribute('position', new THREE.BufferAttribute(new Float32Array(landAttrs.positions), 3))
+landGeometry.setAttribute('normal', new THREE.BufferAttribute(new Float32Array(landAttrs.normals), 3))
+const mesh = new THREE.Mesh(
+  landGeometry,
+  // new THREE.MeshPhongMaterial({ color: 'white' })
+  // new THREE.MeshBasicMaterial({ color: 'white', side: THREE.DoubleSide })
+  new THREE.ShaderMaterial({
+    vertexShader: 'varying vec3 norm;void main(){norm=normalize(normal);gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1);}',
+    fragmentShader: 'varying vec3 norm;void main(){gl_FragColor=vec4(vec3(0.05+0.05*dot(normalize(norm),vec3(-0.7,0,0.7))), 1);}',
+    side: THREE.DoubleSide
+  })
+)
+mesh.position.x = -1
+mesh.position.y = -0.5
+mesh.position.z = 0
+const mesh2 = mesh.clone()
+mesh2.position.x = 8
+mesh2.position.y = 8
+mesh.scale.x = mesh.scale.y = mesh.scale.z = 0.8
+mesh2.scale.x = mesh2.scale.y = mesh2.scale.z = 8
+// mesh.scale.x = mesh.scale.y = mesh.scale.z = 0.2
+
+// land.show()
 
 THREE.ShaderChunk['hanabi_util'] = hanabiUtilChunk
 THREE.ShaderChunk['base_params'] = baseParamsChunk
@@ -16,20 +45,32 @@ THREE.ShaderChunk['blink_params'] = blinkParamsChunk
 THREE.ShaderChunk['particle_params'] = blinkParticleChunk
 
 const renderer = new THREE.WebGLRenderer()
+renderer.autoClear = false
 // renderer.debug.checkShaderErrors = true
 const width = 800
 const height = 600
 renderer.setSize(width, height)
 const scene = new THREE.Scene()
+const groundScene = new THREE.Scene()
+const water = new Water(width, height)
+
+groundScene.add(mesh)
+groundScene.add(mesh2)
 const camera = new THREE.PerspectiveCamera(75, width / height, 0.01, 32)
 camera.up.set(0, 0, 1)
 camera.position.x = 0
-camera.position.y = -2
-camera.position.z = 1.75
-camera.lookAt(0, 0, 1.75)
-const camera2 = camera.clone()
-camera2.position.z *= -1
-camera2.lookAt(0, 0, -1.75)
+camera.position.y = -2.5
+;(camera as any).lookatZ = 1
+renderer.domElement.onmousemove = e => {
+  const r = 2.5
+  const th = e.offsetX / 100
+  camera.position.x = -r * Math.sin(th)
+  camera.position.y = -r * Math.cos(th)
+  camera.lookAt(0, 0, (camera as any).lookatZ = 4 * (1 - e.offsetY / renderer.domElement.offsetWidth) - 2)
+}
+
+camera.position.z = 0.2
+camera.lookAt(0, 0, 1)
 const canvas = renderer.domElement
 document.body.appendChild(canvas)
 
@@ -57,7 +98,7 @@ button.onclick = () => {
     const i = msecs.findIndex(v => n == (v / 100))
     if (i === -1) return
     const msec = msecs[i]
-    capturer.capture(captureCanvases[i], 4 * Math.pow(msec / 1000, 0.4))
+    capturer.capture(captureCanvases[i], 1.5 * Math.pow(msec / 1000, 0.2))
     if (i === 3) {
       clearInterval(timer)
       capturing = false
@@ -69,7 +110,33 @@ button.onclick = () => {
 function animate() {
   const time = performance.now() / 1000
   updatables.forEach(h => h.update(time / 4 % 1))
-  function render() { renderer.render(scene, camera) }
+  const skyColor = new THREE.Color('#222')
+  function resetClearColor() {
+    renderer.setClearColor(new THREE.Color('black'))
+    renderer.setClearAlpha(0)
+  }
+  function render() {
+    water.update(time, camera)
+    const target = renderer.getRenderTarget()
+    renderer.setRenderTarget(water.skyTarget)
+    renderer.setClearColor(skyColor)
+    renderer.clearColor()
+    renderer.clearDepth()
+    renderer.render(scene, water.camera)
+    renderer.setRenderTarget(water.groundTarget)
+    resetClearColor()
+    renderer.clearColor()
+    renderer.clearDepth()
+    renderer.render(groundScene, water.camera)
+    renderer.setRenderTarget(target)
+    scene.add(water.mesh)
+    renderer.setClearColor(skyColor)
+    renderer.clearColor()
+    resetClearColor()
+    renderer.render(groundScene, camera)
+    renderer.render(scene, camera)
+    scene.remove(water.mesh)
+  }
   if (capturing) {
     capturer.add(render)
     capturer.copy(capturer.input.texture, null)

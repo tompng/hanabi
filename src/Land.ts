@@ -55,11 +55,15 @@ export class Land {
   }
   generateBaseTriangles() {
     const { xaxis, yaxis, zmin, zfunc } = this
+    let seed = 13
+    const rand = () => {
+      return (seed = seed * 137 % 33331) / 33332
+    }
     const vertices: Vert[][] = [...new Array(xaxis.step + 1)].map((_, i) => {
       return [...new Array(yaxis.step + 1)].map((_, j) => {
-        const x = i == 0 ? xaxis.min : i == xaxis.step ? xaxis.max : xaxis.min + (xaxis.max - xaxis.min) * (i + 0.1 + 0.8 * Math.random()) / (xaxis.step + 1)
-        const y = j == 0 ? yaxis.min : j == yaxis.step ? yaxis.max : yaxis.min + (yaxis.max - yaxis.min) * (j + 0.1 + 0.8 * Math.random()) / (yaxis.step + 1)
-        return { i, j, x, y, z: zfunc(x, y), n: { x: 0, y: 0, z: 0 } }
+        const x = i == 0 ? xaxis.min : i == xaxis.step ? xaxis.max : xaxis.min + (xaxis.max - xaxis.min) * (i + 0.2 + 0.6 * rand()) / (xaxis.step + 1)
+        const y = j == 0 ? yaxis.min : j == yaxis.step ? yaxis.max : yaxis.min + (yaxis.max - yaxis.min) * (j + 0.2 + 0.6 * rand()) / (yaxis.step + 1)
+        return { i, j, x, y, z: Math.max(zmin, zfunc(x, y)), n: { x: 0, y: 0, z: 0 } }
       })
     })
     const dirs = [[-1,-1],[0,-1],[1,-1],[1,0],[1,1],[0,1],[-1,1],[-1,0]] as const
@@ -83,7 +87,7 @@ export class Land {
     const tpairs = new Map<string, Vert>()
     const tpkey = (a: Vert, b: Vert) => [a.i, a.j, b.i, b.j].join('-')
     const addTriangle = (a: Vert, b: Vert, c: Vert) => {
-      if (a.z < zmin && b.z < zmin && c.z < zmin) return
+      if (a.z == zmin && b.z == zmin && c.z == zmin) return
       tpairs.set(tpkey(a, b), c)
       tpairs.set(tpkey(b, c), a)
       tpairs.set(tpkey(c, a), b)
@@ -112,15 +116,37 @@ export class Land {
       t.ca = tpairs.get(tpkey(t.a, t.c))
     })
   }
+  generateGeometrySimpleAttributes() {
+    // const positions: number[] = []
+    // const normals: number[] = []
+    // this.baseTriangles.forEach(t => {
+    //   positions.push(t.a.x, t.a.y, t.a.z, t.b.x, t.p.y, t.b.z, )
+    //   normals.push(a.n.x, a.n.y, a.n.z, b.n.x, b.n.y, b.n.z)
+    // })
+    // return { positions, normals }
+  }
+  generateGeometryAttributes() {
+    // return this.generateGeometrySimpleAttributes()
+    const triangles = this.generateDetailedTriangles()
+    const positions: number[] = []
+    const normals: number[] = []
+    triangles.forEach(([a, b, c]) => {
+      positions.push(a.p.x, a.p.y, a.p.z, b.p.x, b.p.y, b.p.z, c.p.x, c.p.y, c.p.z)
+      normals.push(a.n.x, a.n.y, a.n.z, b.n.x, b.n.y, b.n.z, c.n.x, c.n.y, c.n.z)
+    })
+    return { positions, normals }
+  }
   generateDetailedTriangles() {
     type P = { p: P3D, n: P3D }
     const vertPositions = new Map<Vert, { p: { x: number, y: number, z: number }, count: number, edge?: true }>()
     const output: [P, P, P][] = []
-    const t = 0.2
+    const t = 0.15
+    function distCorner(a: Vert, b: Vert, c: Vert) {
+      return mix2(a, center3(a, b, c), t)
+    }
     function f(a: Vert, b: Vert, c: Vert, bc: Vert | undefined, n: P3D) {
-      const center = center3(a, b, c)
-      const pa = { p: mix2(a, center, t), n }
-      const pb = { p: mix2(b, center, t), n }
+      const pa = { p: distCorner(a, b, c), n }
+      const pb = { p: distCorner(b, a, c), n }
       if (!bc) {
         const la = { p: mix2(a, b, t / 2), n }
         const lb = { p: mix2(b, a, t / 2), n }
@@ -141,9 +167,8 @@ export class Land {
         output.push([{ p: va, n: a.n }, la, pa])
         output.push([{ p: vb, n: b.n }, pb, lb])
       } else {
-        const tcenter = center3(a, b, bc)
         const tn = norm(a, bc, b)
-        const tpb = { p: mix2(b, tcenter, t), n: tn }
+        const tpb = { p: distCorner(b, a, bc), n: tn }
         output.push([pa, tpb, pb])
         let vp = vertPositions.get(b)
         if (!vp) vertPositions.set(b, vp = { p: { x: 0, y: 0, z: 0 }, count: 0 })
