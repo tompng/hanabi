@@ -48,6 +48,48 @@ type Triangle = {
   ca?: Vert
 }
 
+function periodicSmooth(array: number[], scale: number) {
+  const size = array.length
+  const out = new Array(size).fill(0)
+  let weight = 0
+  for (let k = 0; k < 2; k++) {
+    const ex = Math.exp(-(k + 1) / scale)
+    const exs = 1 / (1 - ex ** size)
+    const c = 2 - 3 * k
+    weight += (2 / (1 - ex) - 1) * c
+    let s = 0
+    for (let i = 0; i < size; i++) s = s * ex + array[i]
+    s *= exs
+    for (let i = 0; i < size; i++) out[i] += c * (s = s * ex + array[i])
+    s = 0
+    for (let i = size - 1; i >= 0; i--) s = s * ex + array[i]
+    s *= exs
+    for (let i = size - 1; i >= 0; i--) {
+      out[i] += c * (s *= ex)
+      s += array[i]
+    }
+  }
+  for (let i = 0; i < size; i++) out[i] /= weight
+  return out
+}
+function addNoise(vertices: Vert[][]) {
+  const a = Math.random()
+  function rand2d(size: number, scale: number) {
+    const arr = [...new Array(size)].map(() => periodicSmooth([...new Array(size)].map(() => rand() - 0.5), scale))
+    return [...new Array(size)].map((_, i) => periodicSmooth([...new Array(size)].map((_, j) => arr[j][i]), scale))
+  }
+  const r1 = rand2d(64, 8)
+  const r2 = rand2d(64, 4)
+  const r3 = rand2d(64, 2)
+  vertices.forEach(vs => vs.forEach(v => {
+    v.z += (r1[v.i % 64][v.j % 64] + r2[v.i % 64][v.j % 64] / 1.5 + r3[v.i % 64][v.j % 64] / 2) * (1 + v.x) * (1 - v.x) * (1 + v.y) * (1 - v.y)
+  }))
+}
+
+let seed = 13
+const rand = () => {
+  return (seed = seed * 137 % 33331) / 33332
+}
 export class Land {
   baseTriangles: Triangle[] = []
   constructor(public xaxis: AxisInfo, public yaxis: AxisInfo, public zmin: number, public zfunc: (x: number, y: number) => number) {
@@ -55,17 +97,14 @@ export class Land {
   }
   generateBaseTriangles() {
     const { xaxis, yaxis, zmin, zfunc } = this
-    let seed = 13
-    const rand = () => {
-      return (seed = seed * 137 % 33331) / 33332
-    }
     const vertices: Vert[][] = [...new Array(xaxis.step + 1)].map((_, i) => {
       return [...new Array(yaxis.step + 1)].map((_, j) => {
         const x = i == 0 ? xaxis.min : i == xaxis.step ? xaxis.max : xaxis.min + (xaxis.max - xaxis.min) * (i + 0.2 + 0.6 * rand()) / (xaxis.step + 1)
         const y = j == 0 ? yaxis.min : j == yaxis.step ? yaxis.max : yaxis.min + (yaxis.max - yaxis.min) * (j + 0.2 + 0.6 * rand()) / (yaxis.step + 1)
-        return { i, j, x, y, z: Math.max(zmin, zfunc(x, y)), n: { x: 0, y: 0, z: 0 } }
+        return { i, j, x, y, z: zfunc(x, y), n: { x: 0, y: 0, z: 0 } }
       })
     })
+    addNoise(vertices)
     const dirs = [[-1,-1],[0,-1],[1,-1],[1,0],[1,1],[0,1],[-1,1],[-1,0]] as const
     for (let i = 0; i <= xaxis.step; i++) {
       for (let j = 0; j <= yaxis.step; j++) {
@@ -87,7 +126,7 @@ export class Land {
     const tpairs = new Map<string, Vert>()
     const tpkey = (a: Vert, b: Vert) => [a.i, a.j, b.i, b.j].join('-')
     const addTriangle = (a: Vert, b: Vert, c: Vert) => {
-      if (a.z == zmin && b.z == zmin && c.z == zmin) return
+      if (a.z <= zmin && b.z <= zmin && c.z <= zmin) return
       tpairs.set(tpkey(a, b), c)
       tpairs.set(tpkey(b, c), a)
       tpairs.set(tpkey(c, a), b)
@@ -117,16 +156,17 @@ export class Land {
     })
   }
   generateGeometrySimpleAttributes() {
-    // const positions: number[] = []
-    // const normals: number[] = []
-    // this.baseTriangles.forEach(t => {
-    //   positions.push(t.a.x, t.a.y, t.a.z, t.b.x, t.p.y, t.b.z, )
-    //   normals.push(a.n.x, a.n.y, a.n.z, b.n.x, b.n.y, b.n.z)
-    // })
-    // return { positions, normals }
+    const positions: number[] = []
+    const normals: number[] = []
+    this.baseTriangles.forEach(t => {
+      positions.push(t.a.x, t.a.y, t.a.z, t.b.x, t.b.y, t.b.z, t.c.x, t.c.y, t.c.z)
+      const n = norm(t.a, t.b, t.c)
+      for (let i = 0; i < 3; i++) normals.push(n.x, n.y, n.z)
+    })
+    return { positions, normals }
   }
   generateGeometryAttributes() {
-    // return this.generateGeometrySimpleAttributes()
+    return this.generateGeometrySimpleAttributes()
     const triangles = this.generateDetailedTriangles()
     const positions: number[] = []
     const normals: number[] = []

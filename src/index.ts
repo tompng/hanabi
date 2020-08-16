@@ -12,7 +12,9 @@ import { Capturer } from './capture'
 import { Land } from './Land'
 import { Water } from './Water'
 
-const land = new Land({min: -1, max: 1, step: 32},{min: -1, max: 1, step: 32},0,(x,y)=>0.4 * (1-x**2-y**2) + 0.2 * (1-x)*(1+x)*(1-y)*(1+y)*Math.random())
+const land = new Land({min: -1, max: 1, step: 256},{min: -1, max: 1, step: 256},0,(x,y)=>
+  (8*(1-x)*(1+x)*(1-y)*(1+y)*(1+Math.sin(8*x+4*y)+Math.sin(2*x-7*y+1)+Math.sin(9*x+11*y+2)+Math.sin(13*x-12*y+3)-6/(1+4*(x**2+y**2))+2*x)-1) / 128
+)
 const landAttrs = land.generateGeometryAttributes()
 const landGeometry = new THREE.BufferGeometry()
 landGeometry.setAttribute('position', new THREE.BufferAttribute(new Float32Array(landAttrs.positions), 3))
@@ -22,20 +24,15 @@ const mesh = new THREE.Mesh(
   // new THREE.MeshPhongMaterial({ color: 'white' })
   // new THREE.MeshBasicMaterial({ color: 'white', side: THREE.DoubleSide })
   new THREE.ShaderMaterial({
-    vertexShader: 'varying vec3 norm;void main(){norm=normalize(normal);gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1);}',
-    fragmentShader: 'varying vec3 norm;void main(){gl_FragColor=vec4(vec3(0.05+0.05*dot(normalize(norm),vec3(-0.7,0,0.7))), 1);}',
+    vertexShader: 'varying vec3 norm;varying float gz;void main(){norm=normalize(normal);gz=position.z;gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1);}',
+    fragmentShader: 'varying vec3 norm;varying float gz;void main(){if(gz<0.0)discard;gl_FragColor=vec4(vec3(0.05+0.05*dot(normalize(norm),vec3(-0.7,0,0.7))), 1);}',
     side: THREE.DoubleSide
   })
 )
-mesh.position.x = -1
-mesh.position.y = -0.5
+mesh.position.x = 0
+mesh.position.y = 0
 mesh.position.z = 0
-const mesh2 = mesh.clone()
-mesh2.position.x = 8
-mesh2.position.y = 8
-mesh.scale.x = mesh.scale.y = mesh.scale.z = 0.8
-mesh2.scale.x = mesh2.scale.y = mesh2.scale.z = 8
-// mesh.scale.x = mesh.scale.y = mesh.scale.z = 0.2
+mesh.scale.x = mesh.scale.y = mesh.scale.z = 8.0
 
 // land.show()
 
@@ -56,17 +53,18 @@ const water = new Water(width, height)
 const waterScene = new THREE.Scene()
 waterScene.add(water.mesh)
 groundScene.add(mesh)
-groundScene.add(mesh2)
 const camera = new THREE.PerspectiveCamera(75, width / height, 0.01, 32)
 camera.up.set(0, 0, 1)
 camera.position.x = 0
-camera.position.y = -2.5
+const cameraR = 2.5 * 3
+camera.position.y = -cameraR
 ;(camera as any).lookatZ = 1
 renderer.domElement.onmousemove = e => {
-  const r = 2.5
+  const r = cameraR
   const th = e.offsetX / 100
   camera.position.x = -r * Math.sin(th)
   camera.position.y = -r * Math.cos(th)
+  camera.position.z = 4 * (1 - e.offsetY / renderer.domElement.offsetWidth)
   camera.lookAt(0, 0, (camera as any).lookatZ = 4 * (1 - e.offsetY / renderer.domElement.offsetWidth) - 2)
 }
 
