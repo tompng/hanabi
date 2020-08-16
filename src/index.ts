@@ -19,13 +19,35 @@ const landAttrs = land.generateGeometryAttributes()
 const landGeometry = new THREE.BufferGeometry()
 landGeometry.setAttribute('position', new THREE.BufferAttribute(new Float32Array(landAttrs.positions), 3))
 landGeometry.setAttribute('normal', new THREE.BufferAttribute(new Float32Array(landAttrs.normals), 3))
+const landUniforms = {
+  color: { value: new THREE.Color('black') }
+}
 const mesh = new THREE.Mesh(
   landGeometry,
   // new THREE.MeshPhongMaterial({ color: 'white' })
   // new THREE.MeshBasicMaterial({ color: 'white', side: THREE.DoubleSide })
   new THREE.ShaderMaterial({
-    vertexShader: 'varying vec3 norm;varying float gz;void main(){norm=normalize(normal);gz=position.z;gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1);}',
-    fragmentShader: 'varying vec3 norm;varying float gz;void main(){if(gz<0.0)discard;gl_FragColor=vec4(vec3(0.05+0.05*dot(normalize(norm),vec3(-0.7,0,0.7))), 1);}',
+    uniforms: landUniforms,
+    vertexShader: `
+      varying vec3 norm;
+      varying vec3 gpos;
+      void main(){
+        norm=normalize(normal);
+        gpos=(modelMatrix * vec4(position, 1)).xyz;
+        gl_Position=projectionMatrix*viewMatrix*vec4(gpos,1);
+      }
+    `,
+    fragmentShader: `
+      varying vec3 norm;
+      varying vec3 gpos;
+      uniform vec3 color;
+      void main(){
+        if(gpos.z<0.0)discard;
+        vec3 lvec = vec3(0, 0, 1) - gpos;
+        vec3 n = normalize(norm);
+        gl_FragColor=vec4(vec3(0.05+0.05*n.z), 1);
+        if (gl_FrontFacing) gl_FragColor.rgb += color * max(dot(n, lvec) * 1.2 - 0.2, 0.0);
+      }`,
     side: THREE.DoubleSide
   })
 )
@@ -109,6 +131,9 @@ button.onclick = () => {
 function animate() {
   const time = performance.now() / 1000
   updatables.forEach(h => h.update(time / 4 % 1))
+  let c = time / 4 % 1
+  c = c < 0.7 ? 0.5 * c * (0.7 - c) * (0.7 - c) : 0
+  landUniforms.color.value = new THREE.Color(c, 0.5 * c, 0.5 * c)
   const skyColor = new THREE.Color('#222')
   function resetClearColor() {
     renderer.setClearColor(new THREE.Color('black'))
