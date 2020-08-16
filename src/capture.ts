@@ -76,6 +76,7 @@ export class Capturer {
     const originalRenderTarget = this.renderer.getRenderTarget()
     this.renderer.setRenderTarget(this.input)
     this.renderer.clearColor()
+    this.renderer.clearDepth()
     render()
     this.copy(this.input.texture, film.target)
     film.n = 1

@@ -9,8 +9,8 @@ void main() {
   vec2 coord = 0.5 + (gl_FragCoord.xy / resolution - 0.5) * 0.8;
   coord.y = 1.0 - coord.y;
   vec3 norm = normalize(vec3(
-    texture2D(wave, pos2d * 0.97 + time * vec2(0.05, 0.02)).xy
-    - texture2D(wave, -pos2d.xy * 0.71 + time * vec2(0.02, 0.05)).xy,
+    texture2D(wave, pos2d * 2.97 + time * vec2(0.05, 0.02)).xy
+    - texture2D(wave, -pos2d.xy * 3.71 + time * vec2(0.02, 0.05)).xy,
     4
   ));
   vec3 view = normalize(vec3(pos2d, 0) - cameraPosition);
