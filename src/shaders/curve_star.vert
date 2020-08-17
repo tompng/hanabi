@@ -42,12 +42,14 @@ void main(){
   vec3 n = normalize(cross(v, gpos - cameraPosition)) * width;
   coord = vec2(2.0 * t - 1.0, u);
   float phase = time / duration / burnRate;
-  brightness = max(1.0 - phase, 0.0);
-  #ifdef STOP
-    if (t2 > stopTime * burnRate) brightness = 0.0;
-  #endif
   #ifdef COLORS
     color = interpolateColor(phase);
+    brightness = 1.0;
+  #else
+    brightness = max(1.0 - phase, 0.0);
+  #endif
+  #ifdef STOP
+    if (t2 > stopTime * burnRate) brightness = 0.0;
   #endif
   gl_Position = projectionMatrix * viewMatrix * vec4(gpos + u * n, 1);
 }

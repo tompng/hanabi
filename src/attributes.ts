@@ -285,3 +285,35 @@ export function setStarParticleAttributes(geometry: THREE.BufferGeometry | THREE
   add1('particleFrictionRandom', particleFrictionRandoms)
   add1('particleDurationRandom', particleDurationRandoms)
 }
+
+export function colorAt(color: THREE.Color | THREE.Color[], phase: number) {
+  if (phase <= 0 || phase >= 1) return { r: 0, g: 0, b: 0 }
+  if (Array.isArray(color)) {
+    if (color.length === 1) return { r: color[0].r, g: color[0].g, b: color[0].b }
+    let t = phase * color.length
+    const i = Math.min(Math.floor(t), color.length - 1)
+    t -= i
+    const ca = color[i]
+    if (i === color.length - 1) {
+      return {
+        r: ca.r * (1 - t),
+        g: ca.g * (1 - t),
+        b: ca.b * (1 - t)
+      }
+    }
+    const cb = color[i + 1]
+    return {
+      r: (ca.r * (1 - t) + t * cb.r),
+      g: (ca.g * (1 - t) + t * cb.g),
+      b: (ca.b * (1 - t) + t * cb.b)
+    }
+  } else {
+    const s = 1 - phase
+    return { r: s * color.r, g: s * color.g, b: s * color.b }
+  }
+}
+export function colorMult({ r, g, b }: { r: number; g: number; b: number }, scale: number) {
+  return { r: r * scale, g: g * scale, b: b * scale }
+}
+
+export const BrightnessZero = { r: 0, g: 0, b: 0 }

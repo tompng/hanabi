@@ -45,9 +45,9 @@ uniform vec3 color5;
 #endif
 vec3 interpolateColor(float t) {
   #if COLORS == 1
-    return color0;
+    return color0 * clamp(1.0 - t, 0.0, 1.0);
   #else
-    float i = clamp(t, 0.0, 0.999) * float(COLORS - 1);
+    float i = clamp(t, 0.0, 0.999) * float(COLORS);
     float s = smoothstep(0.0, 1.0, mod(i, 1.0));
     #if COLORS >= 2
     if (i < 1.0) return mix(color0, color1, s);
@@ -63,6 +63,17 @@ vec3 interpolateColor(float t) {
     #endif
     #if COLORS >= 6
     if (i < 5.0) return mix(color4, color5, s);
+    #endif
+    #if COLORS == 2
+    return color1 * (1.0 - s);
+    #elif COLORS == 3
+    return color2 * (1.0 - s);
+    #elif COLORS == 4
+    return color3 * (1.0 - s);
+    #elif COLORS == 5
+    return color4 * (1.0 - s);
+    #elif COLORS == 6
+    return color5 * (1.0 - s);
     #endif
   #endif
 }

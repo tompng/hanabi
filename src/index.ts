@@ -134,7 +134,22 @@ function animate() {
   updatables.forEach(h => h.update(time / 4 % 1))
   let c = time / 4 % 1
   c = c < 0.7 ? 0.5 * c * (0.7 - c) * (0.7 - c) : 0
-  landUniforms.color.value = new THREE.Color(c, 0.5 * c, 0.5 * c)
+  // landUniforms.color.value = new THREE.Color(c, 0.5 * c, 0.5 * c)
+  const stars = [
+    [pstar, 1],
+    [pstar2, 1],
+    [cstar, 1],
+    [tstar, 64],
+    [sstar, 64],
+  ] as const
+  const starBrightness = { r: 0, g: 0, b: 0 }
+  stars.forEach(([s, l]) => {
+    starBrightness.r += s.brightness.r * l
+    starBrightness.g += s.brightness.g * l
+    starBrightness.b += s.brightness.b * l
+  })
+  const ll = 64
+  landUniforms.color.value = new THREE.Color(starBrightness.r * ll, starBrightness.g * ll, starBrightness.b * ll)
   const skyColor = new THREE.Color('#222')
   function resetClearColor() {
     renderer.setClearColor(new THREE.Color('black'))

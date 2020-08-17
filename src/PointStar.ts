@@ -2,7 +2,7 @@ import * as THREE from 'three'
 import type { N3D } from './util'
 import vertexShader from './shaders/point_star.vert'
 import fragmentShader from './shaders/point_star.frag'
-import { StarBaseAttributes, setStarBaseAttributes, setStarBaseBlinkAttributes, ShaderBaseParams, ShaderBeeParams, ShaderBlinkParams, buildUniforms, ShaderStopParams, ShaderLastFlashParams, timeRangeMax } from './attributes'
+import { StarBaseAttributes, setStarBaseAttributes, setStarBaseBlinkAttributes, ShaderBaseParams, ShaderBeeParams, ShaderBlinkParams, buildUniforms, ShaderStopParams, ShaderLastFlashParams, timeRangeMin, timeRangeMax, colorAt, BrightnessZero } from './attributes'
 
 type PointStarParams = {
   base: ShaderBaseParams
@@ -17,6 +17,7 @@ type PointStarParams = {
 export class PointStar {
   time: { value: number }
   mesh: THREE.Points
+  brightness = BrightnessZero
   constructor(geom: THREE.BufferGeometry, public params: PointStarParams) {
     const { base, color, lastFlash, stop, bee, blink, size } = params
     const uniforms = { ...buildUniforms({ base, color, lastFlash, stop, bee, blink }), size: { value: size } }
@@ -33,9 +34,41 @@ export class PointStar {
   }
   update(time: number) {
     this.time.value = time
-    const { base, stop } = this.params
+    const { base, stop, color, lastFlash, size } = this.params
     const t = stop ? Math.min(stop.time, base.duration) : base.duration
     this.mesh.visible = 0 <= time && time <= timeRangeMax(t, base.burnRateRandomness || 0)
+    if (!this.mesh.visible) {
+      this.brightness = BrightnessZero
+      return
+    }
+    const maxDuration = timeRangeMax(base.duration, base.burnRateRandomness || 0)
+    const phase = time / maxDuration
+    this.brightness = colorAt(color, phase)
+    const scale = size ** 2
+    this.brightness.r *= scale
+    this.brightness.g *= scale
+    this.brightness.b *= scale
+    if (lastFlash) {
+      const { color, duration, size: flashSize } = lastFlash
+      const minDuration = timeRangeMin(base.duration, base.burnRateRandomness || 0)
+      const s = (time - minDuration + duration) / (maxDuration - minDuration + duration)
+      if (0 < s && s < 1) {
+        const l = 4 * (s * (1 - s)) ** 2 * (size + flashSize) ** 2
+        this.brightness.r += l * color.r
+        this.brightness.g += l * color.g
+        this.brightness.b += l * color.b
+      }
+    }
+    if (stop) {
+      const s0 = timeRangeMin(stop.time, base.burnRateRandomness || 0)
+      const s1 = timeRangeMax(stop.time, base.burnRateRandomness || 0)
+      if (s0 < time) {
+        const s = (s1 - time) / (s1 - s0)
+        this.brightness.r *= s
+        this.brightness.g *= s
+        this.brightness.b *= s
+      }
+    }
   }
 }
 
