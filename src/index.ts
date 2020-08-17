@@ -41,12 +41,16 @@ const mesh = new THREE.Mesh(
       varying vec3 norm;
       varying vec3 gpos;
       uniform vec3 color;
+      const vec3 fireworksPosition = vec3(0, 0, 1);
+      const float z2 = fireworksPosition.z * fireworksPosition.z;
       void main(){
         if(gpos.z<0.0)discard;
-        vec3 lvec = vec3(0, 0, 1) - gpos;
+        vec3 lvec = fireworksPosition - gpos;
+        float l2 = dot(lvec, lvec);
+        lvec /= sqrt(l2);
         vec3 n = normalize(norm);
         gl_FragColor=vec4(vec3(0.05+0.05*n.z), 1);
-        if (gl_FrontFacing) gl_FragColor.rgb += color * max(dot(n, lvec) * 1.2 - 0.2, 0.0);
+        if (gl_FrontFacing) gl_FragColor.rgb += color * max(dot(n, lvec) * 1.2 - 0.2, 0.0) / (1.0 + l2 / z2);
       }`,
     side: THREE.DoubleSide
   })
@@ -134,7 +138,6 @@ function animate() {
   updatables.forEach(h => h.update(time / 4 % 1))
   let c = time / 4 % 1
   c = c < 0.7 ? 0.5 * c * (0.7 - c) * (0.7 - c) : 0
-  // landUniforms.color.value = new THREE.Color(c, 0.5 * c, 0.5 * c)
   const stars = [
     [pstar, 1],
     [pstar2, 1],
@@ -148,7 +151,7 @@ function animate() {
     starBrightness.g += s.brightness.g * l
     starBrightness.b += s.brightness.b * l
   })
-  const ll = 64
+  const ll = 1024
   landUniforms.color.value = new THREE.Color(starBrightness.r * ll, starBrightness.g * ll, starBrightness.b * ll)
   const skyColor = new THREE.Color('#222')
   function resetClearColor() {
