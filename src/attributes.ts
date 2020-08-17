@@ -227,6 +227,13 @@ export function setStarBaseAttributes(geometry: THREE.BufferGeometry | THREE.Ins
   add1('beeDecayRandom', beeDecayRandoms)
 }
 
+export function timeRangeMin(time: number, randomness: number) {
+  return time * (1 - 0.5 * randomness)
+}
+export function timeRangeMax(time: number, randomness: number) {
+  return time * (1 + 0.5 * randomness)
+}
+
 export function setStarBaseBlinkAttributes(geometry: THREE.BufferGeometry | THREE.InstancedBufferGeometry, attrs: StarBaseAttributes, repeat: number = 1) {
   const { blinkPhases, blinkRateRandoms } = attrs
   function add(name: string, arr: number[]) {

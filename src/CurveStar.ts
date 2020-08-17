@@ -2,7 +2,7 @@ import * as THREE from 'three'
 import type { N3D } from './util'
 import vertexShader from './shaders/curve_star.vert'
 import fragmentShader from './shaders/curve_star.frag'
-import { setStarBaseAttributes, StarBaseAttributes, ShaderBeeParams, ShaderStopParams, buildUniforms, ShaderBaseParams } from './attributes'
+import { setStarBaseAttributes, StarBaseAttributes, ShaderBeeParams, ShaderStopParams, buildUniforms, ShaderBaseParams, timeRangeMax } from './attributes'
 
 const lineAttributes: Record<number, THREE.BufferAttribute | undefined> = {}
 
@@ -18,7 +18,8 @@ type CurveStarParams = {
 export class CurveStar {
   time: { value: number }
   mesh: THREE.Mesh
-  constructor(geometry: THREE.BufferGeometry, { base, color, stop, bee, widthStart, widthEnd, curveDelay }: CurveStarParams) {
+  constructor(geometry: THREE.BufferGeometry, public params: CurveStarParams) {
+    const { base, color, stop, bee, widthStart, widthEnd, curveDelay } = params
     const uniforms = {
       ...buildUniforms({ base, color, stop, bee }),
       widthStart: { value: widthStart },
@@ -38,6 +39,9 @@ export class CurveStar {
   }
   update(time: number) {
     this.time.value = time
+    const { curveDelay, base, stop } = this.params
+    const t = stop ? Math.min(stop.time, base.duration) : base.duration
+    this.mesh.visible = 0 <= time && time <= curveDelay + timeRangeMax(t, base.burnRateRandomness || 0)
   }
 }
 
