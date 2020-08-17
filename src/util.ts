@@ -76,22 +76,23 @@ export function evenSpherePoints(step: number, randomness: number = 0) { // N = 
 }
 
 export function randomRotatePoints(points: N3D[]) {
-  const [ax, ay, az] = sphereSurfaceRandom()
-  const th = 2 * Math.PI * Math.random()
-  const cos = Math.cos(th)
-  const sin = Math.sin(th)
+  const th1 = 2 * Math.PI * Math.random()
+  const th2 = 2 * Math.PI * Math.random()
+  const th3 = 2 * Math.PI * Math.random()
+  const c1 = Math.cos(th1), s1 = Math.sin(th1)
+  const c2 = Math.cos(th2), s2 = Math.sin(th2)
+  const c3 = Math.cos(th3), s3 = Math.sin(th3)
   points.forEach(p => {
     const [x, y, z] = p
-    const dot = x * ax + y * ay + z * az
-    const bx = x - dot * ax
-    const by = y - dot * ay
-    const bz = z - dot * az
-    const cx = y * az - z * ay
-    const cy = z * ax - x * az
-    const cz = x * ay - y * ax
-    p[0] = bx * cos + cx * sin + dot * ax
-    p[1] = by * cos + cy * sin + dot * ay
-    p[2] = bz * cos + cz * sin + dot * az
+    const x1 = x * c1 - y * s1
+    const y1 = x * s1 + y * c1
+    const y2 = y1 * c2 - z * s2
+    const z2 = y1 * s2 + z * c2
+    const z3 = z2 * c3 - x1 * s3
+    const x3 = z2 * s3 + x1 * c3
+    p[0] = x3
+    p[1] = y2
+    p[2] = z3
   })
 }
 

@@ -6,8 +6,8 @@ import blinkParticleChunk from './shaders/particle_params.vert'
 import { CurveStar, generateCurveStarGeometry } from './CurveStar'
 import { PointStar, generatePointStarGeometry } from './PointStar'
 import { ParticleTailStar, ParticleSplashStar, generateParticleStarGeometry } from './ParticleStar'
-import { evenSpherePoints } from './util'
-import { generateStarBaseAttributes, ShaderBaseParams, ShaderStopParams, ShaderBeeParams, ShaderParticleParams } from './attributes'
+import { N3D, evenSpherePoints, randomRotatePoints } from './util'
+import { generateStarBaseAttributes, ShaderBaseParams, ShaderStopParams, ShaderBeeParams, ShaderParticleParams, starStops } from './attributes'
 import { Capturer } from './capture'
 import { Land } from './Land'
 import { Water } from './Water'
@@ -185,11 +185,36 @@ function animate() {
   requestAnimationFrame(animate)
 }
 
+
+const singleAttr = generateStarBaseAttributes(1)
+const singleDir: N3D[] = [[0, 0, 0]]
+const bulletBaseParams: ShaderBaseParams = {
+  center: new THREE.Vector3(0, 0, 0),
+  baseVelocity: new THREE.Vector3(8, 8, 20),
+  speed: 0,
+  friction: 4,
+  duration: 100
+}
+const stop = starStops(singleDir, singleAttr, bulletBaseParams, null, 0.4)[0]
+
+const particleTailParams: ShaderParticleParams = {
+  speed: 1,
+  friction: 64,
+  duration: 0.2,
+  durationRandomness: 0.5
+}
+
+const bullet = new ParticleTailStar(generateParticleStarGeometry(singleDir, singleAttr, 64), { base: bulletBaseParams, stop: { time: 0.4 }, particle: particleTailParams, color: new THREE.Color(0.1,0.1,0.1), size: 0.01 })
+scene.add(bullet.mesh)
+updatables.push({ update(t) { bullet.update((t + 0.4) % 1) } })
+
+
 const direction = evenSpherePoints(3, 0.5)
+randomRotatePoints(direction)
 const attributes = generateStarBaseAttributes(direction.length)
 const baseParams: ShaderBaseParams = {
-  center: new THREE.Vector3(0, 0, 2),
-  baseVelocity: new THREE.Vector3(0, 0, 0),
+  center: new THREE.Vector3(...stop.p),
+  baseVelocity: new THREE.Vector3(...stop.v),
   speed: 4,
   friction: 4,
   duration: 0.8,
@@ -207,12 +232,7 @@ const beeParams: ShaderBeeParams = {
   decayRandomness: 0.2,
   speedRandomness: 0.2
 }
-const particleTailParams: ShaderParticleParams = {
-  speed: 0.5,
-  friction: 32,
-  duration: 0.1,
-  durationRandomness: 0.5
-}
+
 const particleSplashParams: ShaderParticleParams = {
   speed: 0.4,
   friction: 8,

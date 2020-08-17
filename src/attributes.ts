@@ -1,5 +1,5 @@
 import * as THREE from 'three'
-import { N3D, sphereSurfaceRandom } from './util'
+import { N3D, sphereSurfaceRandom, positionAt, beePositionAt, velocityAt, beeVelocityAt } from './util'
 
 export type ShaderBaseParams = {
   center: THREE.Vector3
@@ -156,6 +156,56 @@ export function generateStarBaseAttributes(size: number) {
     blinkPhases,
     blinkRateRandoms
   }
+}
+
+export function starStops(direction: N3D[], attributes: StarBaseAttributes, base: ShaderBaseParams, bee: ShaderBeeParams | null, stopTime: number) {
+  const {
+    center,
+    baseVelocity,
+    speed,
+    friction,
+    rotation,
+    speedRandomness,
+    frictionRandomness,
+    burnRateRandomness,
+  } = base
+  const output: { p: N3D; v: N3D; t: number }[] = []
+  for (let i = 0; i < attributes.size; i++) {
+    const burnRate = (1 + 0.5 * attributes.burnRateRandoms[i] * (burnRateRandomness || 0))
+    const t = stopTime * burnRate
+    const vr = speed * (1 + 0.5 * attributes.speedRandoms[i] * (speedRandomness || 0))
+    const f = friction * (1 + 0.5 * attributes.frictionRandoms[i] * (frictionRandomness || 0))
+    let dir = direction[i]
+    if (rotation) {
+      const d3 = rotation.multiplyVector3(new THREE.Vector3(...dir))
+      dir = [d3.x, d3.y, d3.z]
+    }
+    const v0: N3D = [
+      baseVelocity.x + vr * dir[0],
+      baseVelocity.y + vr * dir[1],
+      baseVelocity.z + vr * dir[2]
+    ]
+    const p = positionAt(v0, f, t)
+    const v = velocityAt(v0, f, t)
+    p[0] += center.x
+    p[1] += center.y
+    p[2] += center.z
+    if (bee) {
+      const bt = t - bee.start * burnRate;
+      if (bt > 0) {
+        const f = bee.decay * (1.0 + attributes.beeDecayRandoms[i] * (bee.decayRandomness || 0))
+        const speed = bee.speed * (1.0 + attributes.beeSpeedRandoms[i] * (bee.speedRandomness || 0))
+        const bp = beePositionAt(f, bt)
+        const bv = beeVelocityAt(f, bt)
+        for (let j = 0; j < 3; j++) {
+          p[j] += bp * attributes.beeDirections[i][j] * speed
+          v[j] += bv * attributes.beeDirections[i][j] * speed
+        }
+      }
+    }
+    output.push({ p, v, t })
+  }
+  return output
 }
 
 export type StarParticleAttributes = ReturnType<typeof generateStarParticleAttributes>
