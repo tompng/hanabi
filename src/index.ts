@@ -11,7 +11,7 @@ import { generateStarBaseAttributes, ShaderBaseParams, ShaderStopParams, ShaderB
 import { Capturer } from './capture'
 import { Land } from './Land'
 import { Water } from './Water'
-
+import { skyMesh } from './sky'
 const land = new Land({min: -1, max: 1, step: 256},{min: -1, max: 1, step: 256},0,(x,y)=>
   (8*(1-x)*(1+x)*(1-y)*(1+y)*(1+Math.sin(8*x+4*y)+Math.sin(2*x-7*y+1)+Math.sin(9*x+11*y+2)+Math.sin(13*x-12*y+3)-6/(1+4*(x**2+y**2))+2*x)-1) / 128
 )
@@ -70,6 +70,7 @@ const width = 800
 const height = 600
 renderer.setSize(width, height)
 const scene = new THREE.Scene()
+scene.add(skyMesh)
 const groundScene = new THREE.Scene()
 const water = new Water(width, height)
 const waterScene = new THREE.Scene()
