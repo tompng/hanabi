@@ -5,7 +5,7 @@ uniform float widthStart;
 uniform float widthEnd;
 varying vec2 coord;
 varying float brightness;
-const float particleFriction = 32.0;
+uniform float curveFriction;
 #ifdef COLORS
 varying vec3 color;
 #endif
@@ -27,8 +27,8 @@ void main(){
   float t2 = time - delay;
   float friction2 = friction * (1.0 + frictionRandom * frictionRandomness);
   vec3 v1 = velocityAt(v0, friction2, t2);
-  vec3 gpos = center + positionAt(v0, friction2, t2) + positionAt(v1, particleFriction, delay);
-  vec3 v = velocityAt(v0, friction2, t2) + velocityAt(v1, particleFriction, delay);
+  vec3 gpos = center + positionAt(v0, friction2, t2) + positionAt(v1, curveFriction, delay);
+  vec3 v = velocityAt(v0, friction2, t2) + velocityAt(v1, curveFriction, delay);
   #ifdef BEE
     float bt = t2 - beeStart * burnRate;
     if (bt > 0.0) {

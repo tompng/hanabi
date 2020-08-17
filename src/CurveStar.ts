@@ -13,6 +13,7 @@ type CurveStarParams = {
   bee?: ShaderBeeParams
   widthStart: number
   widthEnd: number
+  curveFriction: number
   curveDelay: number
 }
 export class CurveStar {
@@ -20,12 +21,13 @@ export class CurveStar {
   mesh: THREE.Mesh
   brightness = BrightnessZero
   constructor(geometry: THREE.BufferGeometry, public params: CurveStarParams) {
-    const { base, color, stop, bee, widthStart, widthEnd, curveDelay } = params
+    const { base, color, stop, bee, curveFriction, widthStart, widthEnd, curveDelay } = params
     const uniforms = {
       ...buildUniforms({ base, color, stop, bee }),
       widthStart: { value: widthStart },
       widthEnd: { value: widthEnd },
-      curveDelay: { value: curveDelay }
+      curveDelay: { value: curveDelay },
+      curveFriction: { value: curveFriction }
     }
     this.time = uniforms.time
     const material = new THREE.ShaderMaterial({

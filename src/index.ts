@@ -190,7 +190,7 @@ const singleAttr = generateStarBaseAttributes(1)
 const singleDir: N3D[] = [[0, 0, 0]]
 const bulletBaseParams: ShaderBaseParams = {
   center: new THREE.Vector3(0, 0, 0),
-  baseVelocity: new THREE.Vector3(8, 8, 20),
+  baseVelocity: new THREE.Vector3(4, 4, 12),
   speed: 0,
   friction: 4,
   duration: 100
@@ -246,7 +246,7 @@ const curveGeom = generateCurveStarGeometry(direction, attributes)
 const pointGeom = generatePointStarGeometry(direction, attributes)
 const particleGeom = generateParticleStarGeometry(direction, attributes, 64)
 
-const cstar = new CurveStar(curveGeom, { base: baseParams, bee: beeParams, stop: stopParams, widthStart: 0.02, color: color1, widthEnd: 0.005, curveDelay: 0.1 })
+const cstar = new CurveStar(curveGeom, { base: baseParams, bee: beeParams, stop: stopParams, widthStart: 0.02, color: color1, widthEnd: 0.005, curveFriction: particleTailParams.friction, curveDelay: 0.1 })
 scene.add(cstar.mesh)
 updatables.push(cstar)
 
