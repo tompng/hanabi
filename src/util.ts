@@ -114,6 +114,13 @@ export function velocityAt([vx, vy, vz]: N3D, k: number, t: number): N3D {
   ]
 }
 
+export function peakTime(vz: number, k: number): number {
+  const wz = wind[2]
+  const e = -(wz + gravity / k) / (vz - wz - gravity / k)
+  const t = -Math.log(e) / k
+  return t
+}
+
 export function positionAt([vx, vy, vz]: N3D, k: number, t: number): N3D {
   const e = Math.exp(-k * t)
   const [wx, wy, wz] = wind

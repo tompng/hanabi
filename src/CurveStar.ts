@@ -20,7 +20,8 @@ export class CurveStar {
   time: { value: number }
   mesh: THREE.Mesh
   brightness = BrightnessZero
-  constructor(geometry: THREE.BufferGeometry, public params: CurveStarParams) {
+  endTime: number
+  constructor(geometry: THREE.BufferGeometry, public params: CurveStarParams, public count: number) {
     const { base, color, stop, bee, curveFriction, widthStart, widthEnd, curveDelay } = params
     const uniforms = {
       ...buildUniforms({ base, color, stop, bee }),
@@ -39,19 +40,19 @@ export class CurveStar {
       depthWrite: false,
     })
     this.mesh = new THREE.Mesh(geometry, material)
+    this.endTime = curveDelay + timeRangeMax(stop ? Math.min(stop.time, base.duration) : base.duration, base.burnRateRandomness || 0)
   }
   update(time: number) {
     this.time.value = time
     const { curveDelay, base, stop, color, widthStart, widthEnd } = this.params
-    const t = stop ? Math.min(stop.time, base.duration) : base.duration
-    this.mesh.visible = 0 <= time && time <= curveDelay + timeRangeMax(t, base.burnRateRandomness || 0)
+    this.mesh.visible = 0 <= time && time <= this.endTime
     if (!this.mesh.visible) {
       this.brightness = BrightnessZero
       return
     }
     const phase = time / (curveDelay + timeRangeMax(base.duration, base.burnRateRandomness || 0))
     this.brightness = colorAt(color, phase)
-    let scale = 2 * (widthStart + widthEnd) ** 2
+    let scale = 2 * (widthStart + widthEnd) ** 2 * this.count
     if (stop) {
       const s0 = timeRangeMin(stop.time, base.burnRateRandomness || 0)
       const s1 = curveDelay + timeRangeMax(stop.time, base.burnRateRandomness || 0)

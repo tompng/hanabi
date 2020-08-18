@@ -19,8 +19,12 @@ export class ParticleTailStar {
   time: { value: number }
   mesh: THREE.Points
   brightness = BrightnessZero
+  count: number
+  endTime: number
+  maxPDuration: number
   constructor(geom: THREE.BufferGeometry, public params: ParticleTailStarParams) {
     const { base, color, bee, stop, blink, particle, size } = params
+    this.count = geom.getAttribute('position').count
     const uniforms = { ...buildUniforms({ base, color, bee, blink, stop, particle }), size: { value: size } }
     this.time = uniforms.time
     const material = new THREE.ShaderMaterial({
@@ -32,26 +36,26 @@ export class ParticleTailStar {
       depthWrite: false,
     })
     this.mesh = new THREE.Points(geom, material)
+    this.maxPDuration = particle.duration * (1 + 0.5 * (particle.durationRandomness || 0))
+    this.endTime = timeRangeMax(stop ? Math.min(stop.time, base.duration) : base.duration, base.burnRateRandomness || 0) + this.maxPDuration
   }
   update(time: number) {
     this.time.value = time
     const { base, stop, particle, color, size } = this.params
-    const t = stop ? Math.min(stop.time, base.duration) : base.duration
-    const maxPDuration = particle.duration * (1 + 0.5 * (particle.durationRandomness || 0))
-    const maxLife = timeRangeMax(t, base.burnRateRandomness || 0) + maxPDuration
-    this.mesh.visible = 0 <= time && time <= maxLife
+    const maxDuration = timeRangeMax(base.duration, base.burnRateRandomness || 0) + this.maxPDuration
+    this.mesh.visible = 0 <= time && time <= this.endTime
     if (!this.mesh.visible) {
       this.brightness = BrightnessZero
       return
     }
-    this.brightness = colorAt(color, time / maxLife)
-    const scale = size ** 2
+    this.brightness = colorAt(color, time / maxDuration)
+    const scale = size ** 2 * this.count
     this.brightness.r *= scale
     this.brightness.g *= scale
     this.brightness.b *= scale
     if (stop) {
       const s0 = timeRangeMin(stop.time, base.burnRateRandomness || 0)
-      const s1 = timeRangeMax(stop.time, base.burnRateRandomness || 0) + maxPDuration
+      const s1 = timeRangeMax(stop.time, base.burnRateRandomness || 0) + this.maxPDuration
       if (s0 < time) {
         const s = (s1 - time) / (s1 - s0)
         this.brightness.r *= s
@@ -75,8 +79,12 @@ export class ParticleSplashStar {
   time: { value: number }
   mesh: THREE.Points
   brightness = BrightnessZero
+  count: number
+  endTime: number
+  maxLife: number
   constructor(geom: THREE.BufferGeometry, public params: ParticleSplashStarParams & { stop: ShaderStopParams }) {
     const { base, color, bee, blink, particle, stop, size } = params
+    this.count = geom.getAttribute('position').count
     const uniforms = {... buildUniforms({ base, color, bee, blink, stop, particle }), size: { value: size } }
     this.time = uniforms.time
     const material = new THREE.ShaderMaterial({
@@ -88,21 +96,21 @@ export class ParticleSplashStar {
       depthWrite: false,
     })
     this.mesh = new THREE.Points(geom, material)
+    this.maxLife = particle.duration * (1 + 0.5 * (particle.durationRandomness || 0))
+    this.endTime = timeRangeMax(stop.time, base.burnRateRandomness || 0) + this.maxLife
   }
   update(time: number) {
     this.time.value = time
     const { base, stop, particle, color, size } = this.params
     const t0 = timeRangeMin(stop.time, base.burnRateRandomness || 0)
-    const t1 = timeRangeMax(stop.time, base.burnRateRandomness || 0)
-    const maxLife = particle.duration * (1 + 0.5 * (particle.durationRandomness || 0))
-    this.mesh.visible = t0 <= time && time <= t1 + maxLife
+    this.mesh.visible = t0 <= time && time <= this.endTime
     if (!this.mesh.visible) {
       this.brightness = BrightnessZero
       return
     }
-    const phase = (time - t0) / (t1 + maxLife - t0)
+    const phase = (time - t0) / (this.endTime - t0)
     this.brightness = colorAt(color, phase)
-    let scale = size ** 2
+    let scale = size ** 2 * this.count
     if (stop) {
       const s0 = timeRangeMin(stop.time, base.burnRateRandomness || 0)
       const s1 = timeRangeMax(stop.time, base.burnRateRandomness || 0)
