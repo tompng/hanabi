@@ -2,9 +2,7 @@ import * as THREE from 'three'
 import type { N3D } from './util'
 import vertexShader from './shaders/curve_star.vert'
 import fragmentShader from './shaders/curve_star.frag'
-import { setStarBaseAttributes, StarBaseAttributes, ShaderBeeParams, ShaderStopParams, buildUniforms, ShaderBaseParams, timeRangeMin, timeRangeMax, colorAt, BrightnessZero } from './attributes'
-
-const lineAttributes: Record<number, THREE.BufferAttribute | undefined> = {}
+import { setStarBaseAttributes, StarBaseAttributes, ShaderBeeParams, ShaderStopParams, buildUniforms, ShaderBaseParams, timeRangeMin, timeRangeMax, colorAt, BrightnessZero, generateInstancedBufferAttribute3D } from './attributes'
 
 type CurveStarParams = {
   base: ShaderBaseParams
@@ -64,8 +62,9 @@ export class CurveStar {
   }
 }
 
+const lineAttributes = new Map<number, THREE.BufferAttribute>()
 function generateLineAttributes(step: number) {
-  let attr = lineAttributes[step]
+  let attr = lineAttributes.get(step)
   if (attr) return attr
   const positions: number[] = []
   for (let i = 0; i < step; i++) {
@@ -74,7 +73,7 @@ function generateLineAttributes(step: number) {
     positions.push(t, -1, 0, t, +1, 0, t2, -1, 0, t, +1, 0, t2, +1, 0, t2, -1, 0)
   }
   attr = new THREE.BufferAttribute(new Float32Array(positions), 3)
-  lineAttributes[step] = attr
+  lineAttributes.set(step, attr)
   return attr
 }
 
@@ -84,6 +83,7 @@ export function generateCurveStarGeometry(direction: N3D[], attrs: StarBaseAttri
   direction.forEach(p => ds.push(...p))
   geometry.setAttribute('position', generateLineAttributes(lineStep))
   setStarBaseAttributes(geometry, attrs)
-  geometry.setAttribute('direction', new THREE.InstancedBufferAttribute(new Float32Array(ds), 3))
+  geometry.setAttribute('direction', generateInstancedBufferAttribute3D(direction))
+  geometry.boundingSphere = new THREE.Sphere(undefined, 1024)
   return geometry
 }

@@ -208,8 +208,14 @@ export function starStops(direction: N3D[], attributes: StarBaseAttributes, base
   return output
 }
 
-export type StarParticleAttributes = ReturnType<typeof generateStarParticleAttributes>
+export type StarParticleAttributes = ReturnType<typeof generateNewStarParticleAttributes>
+const starParticleAttributesCache = new Map<number, StarParticleAttributes>()
 export function generateStarParticleAttributes(size: number) {
+  let attr = starParticleAttributesCache.get(size)
+  if (!attr) starParticleAttributesCache.set(size, attr = generateNewStarParticleAttributes(size))
+  return attr
+}
+function generateNewStarParticleAttributes(size: number) {
   const blinkPhases: number[] = []
   const blinkRateRandoms: number[] = []
   const particleDirections: N3D[] = []
@@ -256,17 +262,18 @@ export function setStarBaseAttributes(geometry: THREE.BufferGeometry | THREE.Ins
     }
   }
   function add1(name: string, arr: number[]) {
-    let array: number[] = arr
-    if (repeat > 1) {
-      array = []
-      arr.forEach(v => { for (let i = 0; i < repeat; i++) array.push(v) })
+    if (geometry instanceof THREE.InstancedBufferGeometry) {
+      geometry.setAttribute(name, generateInstancedBufferAttribute1D(arr, repeat))
+    } else {
+      geometry.setAttribute(name, generateBufferAttribute1D(arr, repeat))
     }
-    set(name, array, 1)
   }
   function add3(name: string, arr: N3D[]) {
-    let array: number[] = []
-    arr.forEach(p => { for (let i = 0; i < repeat; i++) array.push(...p) })
-    set(name, array, 3)
+    if (geometry instanceof THREE.InstancedBufferGeometry) {
+      geometry.setAttribute(name, generateInstancedBufferAttribute3D(arr, repeat))
+    } else {
+      geometry.setAttribute(name, generateBufferAttribute3D(arr, repeat))
+    }
   }
   add1('burnRateRandom', burnRateRandoms)
   add1('speedRandom', speedRandoms)
@@ -365,6 +372,71 @@ export function colorAt(color: THREE.Color | THREE.Color[], phase: number) {
 }
 export function colorMult({ r, g, b }: { r: number; g: number; b: number }, scale: number) {
   return { r: r * scale, g: g * scale, b: b * scale }
+}
+
+
+const attributeCache1D = new Map<number[], Map<number, THREE.BufferAttribute>>()
+const attributeCache3D = new Map<N3D[], Map<number, THREE.BufferAttribute>>()
+const instancedAttributeCache1D = new Map<number[], Map<number, THREE.BufferAttribute>>()
+const instancedAttributeCache3D = new Map<N3D[], Map<number, THREE.BufferAttribute>>()
+export function generateBufferAttribute1D(array: number[], repeat: number = 1) {
+  return cacheFetch2(attributeCache1D, array, repeat, () => {
+    const arr = new Float32Array(repeat * array.length)
+    array.forEach((v, i) => {
+      for (let j = 0; j < repeat; j++) arr[repeat * i + j] = v
+    })
+    return new THREE.BufferAttribute(arr, 1)
+  })
+}
+export function generateBufferAttribute3D(array: N3D[], repeat: number = 1) {
+  return cacheFetch2(attributeCache3D, array, repeat, () => {
+    const arr = new Float32Array(3 * repeat * array.length)
+    array.forEach((v, i) => {
+      for (let j = 0; j < repeat; j++) {
+        const k = 3 * (repeat * i + j)
+        arr[k] = v[0]
+        arr[k+ 1] = v[1]
+        arr[k + 2] = v[2]
+      }
+    })
+    return new THREE.BufferAttribute(arr, 3)
+  })
+}
+export function generateInstancedBufferAttribute1D(array: number[], repeat: number = 1) {
+  return cacheFetch2(instancedAttributeCache1D, array, repeat, () => {
+    const arr = new Float32Array(repeat * array.length)
+    array.forEach((v, i) => {
+      for (let j = 0; j < repeat; j++) arr[repeat * i + j] = v
+    })
+    return new THREE.InstancedBufferAttribute(arr, 1)
+  })
+}
+export function generateInstancedBufferAttribute3D(array: N3D[], repeat: number = 1) {
+  return cacheFetch2(instancedAttributeCache3D, array, repeat, () => {
+    const arr = new Float32Array(3 * repeat * array.length)
+    array.forEach((v, i) => {
+      for (let j = 0; j < repeat; j++) {
+        const k = 3 * (repeat * i + j)
+        arr[k] = v[0]
+        arr[k+ 1] = v[1]
+        arr[k + 2] = v[2]
+      }
+    })
+    return new THREE.InstancedBufferAttribute(arr, 3)
+  })
+}
+export function cacheFetch2<T, U, V>(cache: Map<T, Map<U, V>>, key1: T, key2: U, f: () => V): V {
+  let map = cache.get(key1)
+  if (!map) cache.set(key1, map = new Map())
+  let v = map.get(key2)
+  if (!v) map.set(key2, v = f())
+  return v
+}
+const emptyPositionAttributeCache = new Map<number, THREE.BufferAttribute>()
+export function generateEmptyPositionAttribute(size: number) {
+  let attr = emptyPositionAttributeCache.get(size)
+  if (!attr) emptyPositionAttributeCache.set(size, attr = new THREE.BufferAttribute(new Float32Array(3 * size), 3))
+  return attr
 }
 
 export const BrightnessZero = { r: 0, g: 0, b: 0 }

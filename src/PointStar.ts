@@ -2,7 +2,10 @@ import * as THREE from 'three'
 import type { N3D } from './util'
 import vertexShader from './shaders/point_star.vert'
 import fragmentShader from './shaders/point_star.frag'
-import { StarBaseAttributes, setStarBaseAttributes, setStarBaseBlinkAttributes, ShaderBaseParams, ShaderBeeParams, ShaderBlinkParams, buildUniforms, ShaderStopParams, ShaderLastFlashParams, timeRangeMin, timeRangeMax, colorAt, BrightnessZero } from './attributes'
+import { StarBaseAttributes, setStarBaseAttributes, setStarBaseBlinkAttributes, ShaderBaseParams, ShaderBeeParams, ShaderBlinkParams, buildUniforms, ShaderStopParams, ShaderLastFlashParams, timeRangeMin, timeRangeMax, colorAt, BrightnessZero,
+  generateEmptyPositionAttribute,
+  generateBufferAttribute3D
+} from './attributes'
 
 type PointStarParams = {
   base: ShaderBaseParams
@@ -75,14 +78,12 @@ export class PointStar {
   }
 }
 
-export function generatePointStarGeometry(direction: N3D[], attrs: StarBaseAttributes, lineStep: number = 8) {
+export function generatePointStarGeometry(direction: N3D[], attrs: StarBaseAttributes) {
   const geometry = new THREE.BufferGeometry()
-  const ds: number[] = []
-  direction.forEach(p => ds.push(...p))
   setStarBaseAttributes(geometry, attrs)
   setStarBaseBlinkAttributes(geometry, attrs)
-  geometry.setAttribute('position', new THREE.BufferAttribute(new Float32Array(3 * direction.length), 3))
-  geometry.setAttribute('direction', new THREE.BufferAttribute(new Float32Array(ds), 3))
-  geometry.boundingSphere = new THREE.Sphere(undefined, 4)
+  geometry.setAttribute('position', generateEmptyPositionAttribute(direction.length))
+  geometry.setAttribute('direction', generateBufferAttribute3D(direction))
+  geometry.boundingSphere = new THREE.Sphere(undefined, 1024)
   return geometry
 }

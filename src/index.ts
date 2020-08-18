@@ -85,7 +85,7 @@ groundScene.add(mesh)
 const camera = new THREE.PerspectiveCamera(75, width / height, 0.1, 2048)
 camera.up.set(0, 0, 1)
 camera.position.x = 0
-const cameraR = 150
+const cameraR = 80
 camera.position.y = -cameraR
 ;(camera as any).lookatZ = 40
 renderer.domElement.onmousemove = e => {
