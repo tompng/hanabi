@@ -23,12 +23,13 @@ export class PointStar {
   brightness = BrightnessZero
   count: number
   endTime: number
+  material: THREE.ShaderMaterial
   constructor(geom: THREE.BufferGeometry, public params: PointStarParams) {
     const { base, color, lastFlash, stop, bee, blink, size } = params
     this.count = geom.getAttribute('position').count
     const uniforms = { ...buildUniforms({ base, color, lastFlash, stop, bee, blink }), size: { value: size } }
     this.time = uniforms.time
-    const material = new THREE.ShaderMaterial({
+    this.material = new THREE.ShaderMaterial({
       defines: { BLINK: !!blink, BEE: !!bee, STOP: !!stop, COLORS: Array.isArray(color) && color.length, LAST_FLASH: !!lastFlash },
       uniforms: uniforms as any,
       vertexShader: vertexShader,
@@ -36,7 +37,7 @@ export class PointStar {
       blending: THREE.AdditiveBlending,
       depthWrite: false,
     })
-    this.mesh = new THREE.Points(geom, material)
+    this.mesh = new THREE.Points(geom, this.material)
     this.endTime = timeRangeMax(stop ? Math.min(stop.time, base.duration) : base.duration, base.burnRateRandomness || 0)
   }
   update(time: number) {
@@ -75,6 +76,9 @@ export class PointStar {
         this.brightness.b *= s
       }
     }
+  }
+  dispose() {
+    this.material.dispose()
   }
 }
 

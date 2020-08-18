@@ -22,12 +22,13 @@ export class ParticleTailStar {
   count: number
   endTime: number
   maxPDuration: number
+  material: THREE.ShaderMaterial
   constructor(geom: THREE.BufferGeometry, public params: ParticleTailStarParams) {
     const { base, color, bee, stop, blink, particle, size } = params
     this.count = geom.getAttribute('position').count
     const uniforms = { ...buildUniforms({ base, color, bee, blink, stop, particle }), size: { value: size } }
     this.time = uniforms.time
-    const material = new THREE.ShaderMaterial({
+    this.material = new THREE.ShaderMaterial({
       defines: { BLINK: !!blink, BEE: !!bee, STOP: !!stop, COLORS: Array.isArray(color) && color.length },
       uniforms: uniforms as any,
       vertexShader: tailVertexShader,
@@ -35,7 +36,7 @@ export class ParticleTailStar {
       blending: THREE.AdditiveBlending,
       depthWrite: false,
     })
-    this.mesh = new THREE.Points(geom, material)
+    this.mesh = new THREE.Points(geom, this.material)
     this.maxPDuration = particle.duration * (1 + 0.5 * (particle.durationRandomness || 0))
     this.endTime = timeRangeMax(stop ? Math.min(stop.time, base.duration) : base.duration, base.burnRateRandomness || 0) + this.maxPDuration
   }
@@ -64,6 +65,9 @@ export class ParticleTailStar {
       }
     }
   }
+  dispose() {
+    this.material.dispose()
+  }
 }
 
 type ParticleSplashStarParams = {
@@ -82,12 +86,13 @@ export class ParticleSplashStar {
   count: number
   endTime: number
   maxLife: number
+  material: THREE.ShaderMaterial
   constructor(geom: THREE.BufferGeometry, public params: ParticleSplashStarParams & { stop: ShaderStopParams }) {
     const { base, color, bee, blink, particle, stop, size } = params
     this.count = geom.getAttribute('position').count
     const uniforms = {... buildUniforms({ base, color, bee, blink, stop, particle }), size: { value: size } }
     this.time = uniforms.time
-    const material = new THREE.ShaderMaterial({
+    this.material = new THREE.ShaderMaterial({
       defines: { BLINK: !!blink, BEE: !!bee, STOP: true, COLORS: Array.isArray(color) && color.length },
       uniforms: uniforms as any,
       vertexShader: splashVertexShader,
@@ -95,7 +100,7 @@ export class ParticleSplashStar {
       blending: THREE.AdditiveBlending,
       depthWrite: false,
     })
-    this.mesh = new THREE.Points(geom, material)
+    this.mesh = new THREE.Points(geom, this.material)
     this.maxLife = particle.duration * (1 + 0.5 * (particle.durationRandomness || 0))
     this.endTime = timeRangeMax(stop.time, base.burnRateRandomness || 0) + this.maxLife
   }
@@ -119,6 +124,9 @@ export class ParticleSplashStar {
     this.brightness.r *= scale
     this.brightness.g *= scale
     this.brightness.b *= scale
+  }
+  dispose() {
+    this.material.dispose()
   }
 }
 

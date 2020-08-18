@@ -19,6 +19,7 @@ export class CurveStar {
   mesh: THREE.Mesh
   brightness = BrightnessZero
   endTime: number
+  material: THREE.ShaderMaterial
   constructor(geometry: THREE.BufferGeometry, public params: CurveStarParams, public count: number) {
     const { base, color, stop, bee, curveFriction, widthStart, widthEnd, curveDelay } = params
     const uniforms = {
@@ -29,7 +30,7 @@ export class CurveStar {
       curveFriction: { value: curveFriction }
     }
     this.time = uniforms.time
-    const material = new THREE.ShaderMaterial({
+    this.material = new THREE.ShaderMaterial({
       defines: { BEE: !!bee, STOP: !!stop, COLORS: Array.isArray(color) && color.length },
       uniforms: uniforms as any,
       vertexShader: vertexShader,
@@ -37,7 +38,7 @@ export class CurveStar {
       blending: THREE.AdditiveBlending,
       depthWrite: false,
     })
-    this.mesh = new THREE.Mesh(geometry, material)
+    this.mesh = new THREE.Mesh(geometry, this.material)
     this.endTime = curveDelay + timeRangeMax(stop ? Math.min(stop.time, base.duration) : base.duration, base.burnRateRandomness || 0)
   }
   update(time: number) {
@@ -59,6 +60,9 @@ export class CurveStar {
     this.brightness.r *= scale
     this.brightness.g *= scale
     this.brightness.b *= scale
+  }
+  dispose() {
+    this.material.dispose()
   }
 }
 

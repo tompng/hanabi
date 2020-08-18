@@ -127,6 +127,7 @@ type FireworkElement = {
     update: (t: number) => void
     brightness: { r: number; g: number; b: number }
     endTime: number
+    dispose: () => void
   }
   startTime: number
 }
@@ -177,6 +178,7 @@ export class Fireworks {
         i++
       } else {
         this.scene.remove(e.star.mesh)
+        e.star.dispose()
         this.elements[i] = this.elements[this.elements.length - 1]
         this.elements.pop()
       }
