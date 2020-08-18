@@ -32,7 +32,7 @@ export class Water {
     const fov = (originalFov: number, scale: number) => {
       return 2 * 180 / Math.PI * Math.atan(Math.tan(Math.PI / 180 * originalFov / 2) / scale)
     }
-    this.camera = new THREE.PerspectiveCamera(fov(75, 0.8), width / height, 0.01, 32)
+    this.camera = new THREE.PerspectiveCamera(fov(75, 0.8), width / height, 0.1, 2048)
     this.mesh = new THREE.Mesh(
       planeGeometry,
       new THREE.ShaderMaterial({

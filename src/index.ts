@@ -41,7 +41,7 @@ const mesh = new THREE.Mesh(
       varying vec3 norm;
       varying vec3 gpos;
       uniform vec3 color;
-      const vec3 fireworksPosition = vec3(0, 0, 1);
+      const vec3 fireworksPosition = vec3(0, 0, 100);
       const float z2 = fireworksPosition.z * fireworksPosition.z;
       void main(){
         if(gpos.z<0.0)discard;
@@ -58,7 +58,7 @@ const mesh = new THREE.Mesh(
 mesh.position.x = 0
 mesh.position.y = 0
 mesh.position.z = 0
-mesh.scale.x = mesh.scale.y = mesh.scale.z = 8.0
+mesh.scale.x = mesh.scale.y = mesh.scale.z = 256.0
 
 // land.show()
 
@@ -80,23 +80,23 @@ const water = new Water(width, height)
 const waterScene = new THREE.Scene()
 waterScene.add(water.mesh)
 groundScene.add(mesh)
-const camera = new THREE.PerspectiveCamera(75, width / height, 0.01, 32)
+const camera = new THREE.PerspectiveCamera(75, width / height, 0.1, 2048)
 camera.up.set(0, 0, 1)
 camera.position.x = 0
-const cameraR = 5
+const cameraR = 150
 camera.position.y = -cameraR
-;(camera as any).lookatZ = 1
+;(camera as any).lookatZ = 40
 renderer.domElement.onmousemove = e => {
   const r = cameraR
   const th = e.offsetX / 100
   camera.position.x = -r * Math.sin(th)
   camera.position.y = -r * Math.cos(th)
-  camera.position.z = 4 * (1 - e.offsetY / renderer.domElement.offsetHeight)
-  camera.lookAt(0, 0, (camera as any).lookatZ = 1)
+  camera.position.z = 160 * (1 - e.offsetY / renderer.domElement.offsetHeight) + 1
+  camera.lookAt(0, 0, (camera as any).lookatZ)
 }
 
-camera.position.z = 0.2
-camera.lookAt(0, 0, 1)
+camera.position.z = 1
+camera.lookAt(0, 0, (camera as any).lookatZ)
 const canvas = renderer.domElement
 document.body.appendChild(canvas)
 
@@ -135,9 +135,7 @@ button.onclick = () => {
 
 function animate() {
   const time = performance.now() / 1000
-  updatables.forEach(h => h.update(time / 4 % 1))
-  let c = time / 4 % 1
-  c = c < 0.7 ? 0.5 * c * (0.7 - c) * (0.7 - c) : 0
+  updatables.forEach(h => h.update(time % 8))
   const stars = [
     [pstar, 1],
     [pstar2, 1],
@@ -151,7 +149,7 @@ function animate() {
     starBrightness.g += s.brightness.g * l
     starBrightness.b += s.brightness.b * l
   })
-  const ll = 1024
+  const ll = 0.2
   landUniforms.color.value = new THREE.Color(starBrightness.r * ll, starBrightness.g * ll, starBrightness.b * ll)
   const skyColor = new THREE.Color('#222')
   function resetClearColor() {
@@ -193,23 +191,23 @@ const singleAttr = generateStarBaseAttributes(1)
 const singleDir: N3D[] = [[0, 0, 0]]
 const bulletBaseParams: ShaderBaseParams = {
   center: new THREE.Vector3(0, 0, 0),
-  baseVelocity: new THREE.Vector3(4, 4, 12),
+  baseVelocity: new THREE.Vector3(16, 16, 90),
   speed: 0,
-  friction: 4,
+  friction: 1,
   duration: 100
 }
-const stop = starStops(singleDir, singleAttr, bulletBaseParams, null, 0.4)[0]
+const stop = starStops(singleDir, singleAttr, bulletBaseParams, null, 1.6)[0]
 
 const particleTailParams: ShaderParticleParams = {
   speed: 1,
-  friction: 64,
-  duration: 0.2,
+  friction: 16,
+  duration: 0.8,
   durationRandomness: 0.5
 }
 
-const bullet = new ParticleTailStar(generateParticleStarGeometry(singleDir, singleAttr, 64), { base: bulletBaseParams, stop: { time: 0.4 }, particle: particleTailParams, color: new THREE.Color(0.1,0.1,0.1), size: 0.01 })
+const bullet = new ParticleTailStar(generateParticleStarGeometry(singleDir, singleAttr, 64), { base: bulletBaseParams, stop: { time: 1.6 }, particle: particleTailParams, color: new THREE.Color(0.1,0.1,0.1), size: 0.2 })
 scene.add(bullet.mesh)
-updatables.push({ update(t) { bullet.update((t + 0.4) % 1) } })
+updatables.push({ update(t) { bullet.update((t + 1.6) % 8) } })
 
 
 const direction = evenSpherePoints(3, 0.5)
@@ -218,54 +216,54 @@ const attributes = generateStarBaseAttributes(direction.length)
 const baseParams: ShaderBaseParams = {
   center: new THREE.Vector3(...stop.p),
   baseVelocity: new THREE.Vector3(...stop.v),
-  speed: 4,
-  friction: 4,
-  duration: 0.8,
+  speed: 20,
+  friction: 1,
+  duration: 4.0,
   speedRandomness: 0.1,
   frictionRandomness: 0.4,
   burnRateRandomness: 0.4
 }
 const stopParams: ShaderStopParams = {
-  time: 0.4
+  time: 1.6
 }
 const beeParams: ShaderBeeParams = {
-  start: 0.1,
-  decay: 16.0,
-  speed: 8.0,
+  start: 0.8,
+  decay: 4.0,
+  speed: 32.0,
   decayRandomness: 0.2,
   speedRandomness: 0.2
 }
 
 const particleSplashParams: ShaderParticleParams = {
-  speed: 0.4,
+  speed: 12,
   friction: 8,
-  duration: 0.15
+  duration: 0.8
 }
 const color1 = [new THREE.Color('#884'), new THREE.Color('#f84'), new THREE.Color('white')]
 const color2 = new THREE.Color('#a66')
-const color3 = [new THREE.Color('white'), new THREE.Color('#faa'), new THREE.Color('black')]
+const color3 = [new THREE.Color('white'), new THREE.Color('#faa')]
 
 const curveGeom = generateCurveStarGeometry(direction, attributes)
 const pointGeom = generatePointStarGeometry(direction, attributes)
 const particleGeom = generateParticleStarGeometry(direction, attributes, 64)
 
-const cstar = new CurveStar(curveGeom, { base: baseParams, bee: beeParams, stop: stopParams, widthStart: 0.02, color: color1, widthEnd: 0.005, curveFriction: particleTailParams.friction, curveDelay: 0.1 })
+const cstar = new CurveStar(curveGeom, { base: baseParams, bee: beeParams, stop: stopParams, widthStart: 0.5, color: color1, widthEnd: 0.1, curveFriction: particleTailParams.friction, curveDelay: 0.4 })
 scene.add(cstar.mesh)
 updatables.push(cstar)
 
-const pstar = new PointStar(pointGeom, { base: baseParams, bee: beeParams, stop: stopParams, color: color1, size: 0.02 })
+const pstar = new PointStar(pointGeom, { base: baseParams, bee: beeParams, stop: stopParams, color: color1, size: 0.8 })
 scene.add(pstar.mesh)
 updatables.push(pstar)
 
-const pstar2 = new PointStar(pointGeom, { base: { ...baseParams, friction: 6, burnRateRandomness: 0.1, speedRandomness: 0, frictionRandomness: 0, speed: 6, duration: 0.4 }, color: color3, lastFlash: { duration: 0.1, color: new THREE.Color('white'), size: 0.04 }, size: 0.02 })
+const pstar2 = new PointStar(pointGeom, { base: { ...baseParams, friction: 1, burnRateRandomness: 0.1, speedRandomness: 0, frictionRandomness: 0, speed: 30, duration: 2 }, color: color3, lastFlash: { duration: 0.4, color: new THREE.Color('white'), size: 0.2 }, size: 0.8 })
 scene.add(pstar2.mesh)
 updatables.push(pstar2)
 
-const tstar = new ParticleTailStar(particleGeom, { base: baseParams, bee: beeParams, stop: stopParams, particle: particleTailParams, size: 0.007, color: color2 })
+const tstar = new ParticleTailStar(particleGeom, { base: baseParams, bee: beeParams, stop: stopParams, particle: particleTailParams, size: 0.2, color: color2 })
 scene.add(tstar.mesh)
 updatables.push(tstar)
 
-const sstar = new ParticleSplashStar(particleGeom, { base: baseParams, bee: beeParams, stop: stopParams, particle: particleSplashParams, size: 0.005, color: color3 })
+const sstar = new ParticleSplashStar(particleGeom, { base: baseParams, bee: beeParams, stop: stopParams, particle: particleSplashParams, size: 0.2, color: color3 })
 scene.add(sstar.mesh)
 updatables.push(sstar)
 

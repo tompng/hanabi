@@ -102,7 +102,7 @@ v = w+(k*exp(-a*t)-g)/a
 v = w+(g/a+(v0-w))*exp(-a*t)-g/a
 x = (w-g/a)t-(g+a(v0-w))/aa*(exp(-a*t)-1)
 */
-export const wind: N3D = [0.65, 0, 0]
+export const wind: N3D = [1, 0, 0]
 export const gravity = -9.8;
 export function velocityAt([vx, vy, vz]: N3D, k: number, t: number): N3D {
   const e = Math.exp(-k * t)

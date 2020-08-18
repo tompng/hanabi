@@ -343,6 +343,7 @@ export function colorAt(color: THREE.Color | THREE.Color[], phase: number) {
     let t = phase * color.length
     const i = Math.min(Math.floor(t), color.length - 1)
     t -= i
+    t = t * t * (3 - 2 * t)
     const ca = color[i]
     if (i === color.length - 1) {
       return {

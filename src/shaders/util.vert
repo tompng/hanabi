@@ -1,5 +1,5 @@
 const float pi = 3.14159265358979323846;
-const vec3 wind = vec3(0.5, 0, 0);
+const vec3 wind = vec3(1, 0, 0);
 const vec3 gravity = vec3(0, 0, -9.8);
 vec3 velocityAt(vec3 v0, float k, float t) {
   return wind + gravity / k + (v0 - wind - gravity / k) * exp(-k * t);
