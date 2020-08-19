@@ -1,6 +1,6 @@
 import * as THREE from 'three'
 const sphereGeometry = new THREE.SphereBufferGeometry(1, 32, 16, undefined, undefined, 0, Math.PI / 2 * 1.2)
-
+sphereGeometry.boundingSphere = new THREE.Sphere(undefined, 1024)
 export const skyMesh = new THREE.Mesh(
   sphereGeometry,
   new THREE.ShaderMaterial({

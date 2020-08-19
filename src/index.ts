@@ -3,16 +3,17 @@ import hanabiUtilChunk from './shaders/util.vert'
 import baseParamsChunk from './shaders/base_params.vert'
 import blinkParamsChunk from './shaders/blink_params.vert'
 import blinkParticleChunk from './shaders/particle_params.vert'
-import { CurveStar, generateCurveStarGeometry } from './CurveStar'
-import { PointStar, generatePointStarGeometry } from './PointStar'
-import { ParticleTailStar, ParticleSplashStar, generateParticleStarGeometry } from './ParticleStar'
-import { N3D, evenSpherePoints, randomRotatePoints, peakTime } from './util'
+import { CurveStar } from './CurveStar'
+import { PointStar } from './PointStar'
+import { ParticleTailStar, ParticleSplashStar } from './ParticleStar'
+import { N3D, evenSpherePoints, peakTime } from './util'
 import { generateStarBaseAttributes, ShaderBaseParams, ShaderStopParams, ShaderBeeParams, ShaderParticleParams, starStops } from './attributes'
 import { Capturer } from './capture'
 import { Land } from './Land'
 import { Water } from './Water'
 import { skyMesh } from './sky'
 import { Fireworks } from './fireworks'
+import { Camera } from './camera'
 const land = new Land({min: -1, max: 1, step: 256},{min: -1, max: 1, step: 256},0,(x,y)=>
   (8*(1-x)*(1+x)*(1-y)*(1+y)*(1+Math.sin(8*x+4*y)+Math.sin(2*x-7*y+1)+Math.sin(9*x+11*y+2)+Math.sin(13*x-12*y+3)-6/(1+4*(x**2+y**2))+2*x)-1) / 128
 )
@@ -82,23 +83,19 @@ const water = new Water(width, height)
 const waterScene = new THREE.Scene()
 waterScene.add(water.mesh)
 groundScene.add(mesh)
-const camera = new THREE.PerspectiveCamera(75, width / height, 0.1, 2048)
-camera.up.set(0, 0, 1)
-camera.position.x = 0
+const camera = new Camera(width, height)
 const cameraR = 80
-camera.position.y = -cameraR
-;(camera as any).lookatZ = 40
+camera.position.x = -cameraR
+camera.position.z = 1
 renderer.domElement.onmousemove = e => {
   const r = cameraR
   const th = e.offsetX / 100
-  camera.position.x = -r * Math.sin(th)
-  camera.position.y = -r * Math.cos(th)
+  camera.position.x = -r * Math.cos(th)
+  camera.position.y = -r * Math.sin(th)
   camera.position.z = 160 * (1 - e.offsetY / renderer.domElement.offsetHeight) + 1
-  camera.lookAt(0, 0, (camera as any).lookatZ)
+  camera.horizontalAngle = th
+  camera.verticalAngle = Math.atan((50 - camera.position.z) / cameraR)
 }
-
-camera.position.z = 1
-camera.lookAt(0, 0, (camera as any).lookatZ)
 const canvas = renderer.domElement
 document.body.appendChild(canvas)
 
@@ -135,7 +132,7 @@ button.onclick = () => {
 let timeWas = performance.now() / 1000
 function animate() {
   const time = performance.now() / 1000
-  
+  camera.update()
   if (Math.floor(timeWas / 0.2) !== Math.floor(time / 0.2)) {
     if (Math.random() < 0.1) add(time)
   }
@@ -147,21 +144,21 @@ function animate() {
   landUniforms.color.value = new THREE.Color(brightness.r * ll, brightness.g * ll, brightness.b * ll)
 
   function render() {
-    water.update(time, camera)
+    water.update(time)
     const target = renderer.getRenderTarget()
     renderer.setRenderTarget(water.skyTarget)
     renderer.clearColor()
     renderer.clearDepth()
-    renderer.render(scene, water.camera)
+    renderer.render(scene, camera.waterCamera)
     renderer.setRenderTarget(water.groundTarget)
     renderer.clearColor()
     renderer.clearDepth()
-    renderer.render(groundScene, water.camera)
+    renderer.render(groundScene, camera.waterCamera)
     renderer.setRenderTarget(target)
     renderer.clearColor()
-    renderer.render(groundScene, camera)
-    renderer.render(waterScene, camera)
-    renderer.render(scene, camera)
+    renderer.render(groundScene, camera.mainCamera)
+    renderer.render(waterScene, camera.mainCamera)
+    renderer.render(scene, camera.mainCamera)
   }
   if (capturing) {
     capturer.add(render)
