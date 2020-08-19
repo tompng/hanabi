@@ -14,6 +14,7 @@ import { Water } from './Water'
 import { skyMesh } from './sky'
 import { Fireworks } from './fireworks'
 import { Camera } from './camera'
+import { Mesh } from 'three'
 const land = new Land({min: -1, max: 1, step: 256},{min: -1, max: 1, step: 256},0,(x,y)=>
   (8*(1-x)*(1+x)*(1-y)*(1+y)*(1+Math.sin(8*x+4*y)+Math.sin(2*x-7*y+1)+Math.sin(9*x+11*y+2)+Math.sin(13*x-12*y+3)-6/(1+4*(x**2+y**2))+2*x)-1) / 128
 )
@@ -86,7 +87,7 @@ const cameraR = 80
 camera.position.x = -cameraR
 camera.position.z = 1
 camera.verticalAngle = 0.5
-const destination = { x: camera.position.x, y: camera.position.y }
+const move = { from: { x: camera.position.x, y: camera.position.y }, to: { x: camera.position.x, y: camera.position.y }, time: 0 }
 const lscale = 256
 renderer.domElement.onmousedown = e => {
   const startX = e.pageX
@@ -112,31 +113,32 @@ renderer.domElement.onmousedown = e => {
     const rx = (e.pageX - el.offsetLeft) / el.offsetWidth
     const ry = (e.pageY - el.offsetTop) / el.offsetHeight
     const view = camera.viewAt(rx, ry)
-    const rxy = Math.hypot(view.x, view.y)
     const maxXYDistance = 40
-    let t = rxy > maxXYDistance ? 1 : maxXYDistance / rxy
-    let moveT: number | null = null
-    if (view.z < 0) {
-      const t0 = -camera.position.z / view.z
-      moveT = t = t0
-    }
-    for (let k = 0; k <= 100; k++) {
-      const t2 = t * k / 100
-      const cvz = camera.position.z + t2 * view.z
-      const z = Math.max(0, lscale * land.zAt((camera.position.x + t2 * view.x) / lscale, (camera.position.y + t2 * view.y) / lscale))
-      if (z > cvz) {
-        moveT = t2
-        break
+    const p = land.intersect(
+      {
+        x: camera.position.x / lscale,
+        y: camera.position.y / lscale,
+        z: camera.position.z / lscale
+      },
+      view
+    )
+    if (p) {
+      const dx = p.x * lscale - camera.position.x
+      const dy = p.y * lscale - camera.position.y
+      const r = Math.hypot(dx, dy)
+      const l = Math.min(maxXYDistance / r, 1)
+      move.to = {
+        x: Math.min(Math.max(-lscale, camera.position.x + l * dx), lscale),
+        y: Math.min(Math.max(-lscale, camera.position.y + l * dy), lscale)
       }
-    }
-    if (moveT != null) {
-      destination.x = camera.position.x + moveT * view.x
-      destination.y = camera.position.y + moveT * view.y
+      move.from = { x: camera.position.x, y: camera.position.y }
+      move.time = performance.now() / 1000
     }
   }
   window.addEventListener('mousemove', mousemove)
   window.addEventListener('mouseup', mouseup)
 }
+
 
 const canvas = renderer.domElement
 document.body.appendChild(canvas)
@@ -174,16 +176,11 @@ button.onclick = () => {
 let timeWas = performance.now() / 1000
 function animate() {
   const time = performance.now() / 1000
-
-  const dstx = destination.x - camera.position.x
-  const dsty = destination.y - camera.position.y
-  const dstr = Math.hypot(dstx, dsty)
-  const dstt = 1 / Math.max(dstr, 1)
-  camera.position.x += dstx * dstt
-  camera.position.y += dsty * dstt
-  camera.position.x = Math.min(Math.max(-lscale, camera.position.x), lscale)
-  camera.position.y = Math.min(Math.max(-lscale, camera.position.y), lscale)
-  camera.position.z = Math.max(0, lscale * land.zAt(camera.position.x / lscale, camera.position.y / lscale)) + 1
+  let mt = Math.min(Math.max(0, (time - move.time) / 2), 1)
+  mt = mt * mt * (3 - 2 * mt)
+  camera.position.x = move.from.x * (1 - mt) + mt * move.to.x
+  camera.position.y = move.from.y * (1 - mt) + mt * move.to.y
+  camera.position.z = Math.max(0, lscale * land.maxZAt(camera.position.x / lscale, camera.position.y / lscale)) + 1
 
   camera.update()
   if (Math.floor(timeWas / 0.2) !== Math.floor(time / 0.2)) {

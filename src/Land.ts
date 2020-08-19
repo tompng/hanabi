@@ -8,6 +8,10 @@ type Vert = {
   z: number
   n: P3D
 }
+function dot(a: P3D, b: P3D) {
+  return a.x * b.x + a.y * b.y + a.z * b.z
+}
+
 function normalize({ x, y, z }: P3D) {
   const nr = Math.hypot(x, y, z)
   return { x: x / nr, y: y / nr, z: z / nr }
@@ -43,6 +47,7 @@ type Triangle = {
   a: Vert
   b: Vert
   c: Vert
+  n: P3D
   ab?: Vert
   bc?: Vert
   ca?: Vert
@@ -96,6 +101,16 @@ export class Land {
   constructor(public xaxis: AxisInfo, public yaxis: AxisInfo, public zmin: number, public zfunc: (x: number, y: number) => number) {
     this.generateBaseTriangles()
   }
+  maxZAt(x: number, y: number) {
+    return Math.max(
+      0,
+      this.zAt(x, y),
+      this.zAt(x + 0.01, y),
+      this.zAt(x - 0.01, y),
+      this.zAt(x, y + 0.01),
+      this.zAt(x, y - 0.01)
+    )
+  }
   zAt(x: number, y: number) {
     x = Math.min(Math.max(this.xaxis.min, x), this.xaxis.max)
     y = Math.min(Math.max(this.yaxis.min, y), this.yaxis.max)
@@ -111,6 +126,32 @@ export class Land {
       + (1 - fi) * fj * this.zmap[i][j + 1]
       + fi * fj * this.zmap[i + 1][j + 1]
     )
+  }
+  intersect(from: { x: number; y: number; z: number }, view: { x: number; y: number; z: number }) {
+    let minT = view.z < 0 ? -from.z / view.z : Infinity
+    function crossdot(a: P3D, b: P3D, c: P3D) {
+      return (a.y * b.z - a.z * b.y) * c.x + (a.z * b.x - a.x * b.z) * c.y + (a.x * b.y - a.y * b.x) * c.z
+    }
+    this.baseTriangles.forEach(({ a, b, c, n }) => {
+      const fa = { x: a.x - from.x, y: a.y - from.y, z: a.z - from.z }
+      const fb = { x: b.x - from.x, y: b.y - from.y, z: b.z - from.z }
+      const fc = { x: c.x - from.x, y: c.y - from.y, z: c.z - from.z }
+      const v = crossdot(fa, fb, fc)
+      const ab = crossdot(fa, fb, view)
+      const bc = crossdot(fb, fc, view)
+      const ca = crossdot(fc, fa, view)
+      if ((ab < 0 && bc < 0 && ca < 0) || (ab > 0 && bc > 0 && ca > 0)) {
+        const t = v / (ab + bc + ca)
+        if (0 < t && t < minT) minT = t
+      }
+    })
+    if (minT === Infinity) return null
+    return {
+      x: from.x + view.x * minT,
+      y: from.y + view.y * minT,
+      z: from.z + view.z * minT,
+      t: minT
+    }
   }
   generateBaseTriangles() {
     const { xaxis, yaxis, zmin, zfunc } = this
@@ -145,10 +186,12 @@ export class Land {
     const tpkey = (a: Vert, b: Vert) => [a.i, a.j, b.i, b.j].join('-')
     const addTriangle = (a: Vert, b: Vert, c: Vert) => {
       if (a.z <= zmin && b.z <= zmin && c.z <= zmin) return
+
       tpairs.set(tpkey(a, b), c)
       tpairs.set(tpkey(b, c), a)
       tpairs.set(tpkey(c, a), b)
-      this.baseTriangles.push({ a, b, c })
+      const n = norm(a, b, c)
+      this.baseTriangles.push({ a, b, c, n })
     }
     for (let i = 0; i < xaxis.step; i++) {
       for (let j = 0; j < yaxis.step; j++) {
@@ -178,8 +221,7 @@ export class Land {
     const normals: number[] = []
     this.baseTriangles.forEach(t => {
       positions.push(t.a.x, t.a.y, t.a.z, t.b.x, t.b.y, t.b.z, t.c.x, t.c.y, t.c.z)
-      const n = norm(t.a, t.b, t.c)
-      for (let i = 0; i < 3; i++) normals.push(n.x, n.y, n.z)
+      for (let i = 0; i < 3; i++) normals.push(t.n.x, t.n.y, t.n.z)
     })
     return { positions, normals }
   }
