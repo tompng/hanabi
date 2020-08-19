@@ -89,14 +89,19 @@ camera.position.z = 1
 camera.verticalAngle = 0.5
 const move = { from: { x: camera.position.x, y: camera.position.y }, to: { x: camera.position.x, y: camera.position.y }, time: 0 }
 const lscale = 256
-renderer.domElement.onmousedown = e => {
+let currentPointerId: null | number = null
+renderer.domElement.addEventListener('pointerdown', e => {
+  currentPointerId = e.pointerId
   const startX = e.pageX
   const startY = e.pageY
+  e.preventDefault()
   const startHAngle = camera.horizontalAngle
   const startVAngle = camera.verticalAngle
   let maxMove = 0
   const time = performance.now()
-  function mousemove(e: MouseEvent) {
+  function pointermove(e: PointerEvent) {
+    e.preventDefault()
+    if (e.pointerId !== currentPointerId) return
     const dx = e.pageX - startX
     const dy = e.pageY - startY
     maxMove = Math.max(maxMove, Math.abs(dx), Math.abs(dy))
@@ -105,9 +110,10 @@ renderer.domElement.onmousedown = e => {
     camera.horizontalAngle = startHAngle + dx * scale
     camera.verticalAngle = Math.min(Math.max(-Math.PI / 3, startVAngle + dy * scale), Math.PI / 3)
   }
-  function mouseup(e: MouseEvent) {
-    window.removeEventListener('mousemove', mousemove)
-    window.removeEventListener('mouseup', mouseup)
+  function pointerup(e: PointerEvent) {
+    window.removeEventListener('pointermove', pointermove)
+    window.removeEventListener('pointerup', pointerup)
+    if (e.pointerId !== currentPointerId) return
     if (maxMove >= 4 || performance.now() - time > 500) return
     const el = renderer.domElement
     const rx = (e.pageX - el.offsetLeft) / el.offsetWidth
@@ -135,12 +141,13 @@ renderer.domElement.onmousedown = e => {
       move.time = performance.now() / 1000
     }
   }
-  window.addEventListener('mousemove', mousemove)
-  window.addEventListener('mouseup', mouseup)
-}
+  window.addEventListener('pointermove', pointermove)
+  window.addEventListener('pointerup', pointerup)
+})
 
 
 const canvas = renderer.domElement
+canvas.style.touchAction = 'none'
 document.body.appendChild(canvas)
 
 const capturer = new Capturer(renderer, 800, 600)
