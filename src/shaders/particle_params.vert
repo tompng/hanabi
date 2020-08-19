@@ -10,4 +10,4 @@ uniform float particleFriction;
 uniform float particleDuration;
 uniform float particleDurationRandomness;
 uniform float size;
-const float resolution = 800.0;
+uniform float pointPixels;

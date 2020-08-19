@@ -2,7 +2,7 @@
 #include <base_params>
 #include <blink_params>
 uniform float size;
-const float resolution = 800.0;
+uniform float pointPixels;
 varying float brightness;
 #ifdef COLORS
 varying vec3 color;
@@ -40,9 +40,9 @@ void main() {
     lastFlash *= 4.0 * (1.0 - lastFlash);
     lastFlash *= lastFlash;
     lfcolor = lastFlash * lastFlashColor;
-    float fPointSize = (size + lastFlashSize * lastFlash) * resolution / distance(cameraPosition, gpos);
+    float fPointSize = (size + lastFlashSize * lastFlash) * pointPixels / distance(cameraPosition, gpos);
   #else
-    float fPointSize = size * resolution / distance(cameraPosition, gpos);
+    float fPointSize = size * pointPixels / distance(cameraPosition, gpos);
   #endif
   gl_PointSize = clamp(fPointSize, 2.0, 16.0);
   float phase = time / duration / burnRate;

@@ -31,7 +31,7 @@ void main() {
       gpos += beePositionAt(k, bt) * beeDirection * speed;
     }
   #endif
-  float fPointSize = resolution * size / distance(cameraPosition, gpos);
+  float fPointSize = pointPixels * size / distance(cameraPosition, gpos);
   gl_PointSize = clamp(2.0, fPointSize, 16.0);
   float phase = t2 / pduration;
   #ifdef COLORS

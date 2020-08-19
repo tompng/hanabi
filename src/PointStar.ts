@@ -20,6 +20,7 @@ type PointStarParams = {
 
 export class PointStar {
   time: { value: number }
+  pointPixels = { value: 0 }
   mesh: THREE.Points
   brightness = BrightnessZero
   count: number
@@ -29,7 +30,7 @@ export class PointStar {
     this.count = direction.length
     const geom = generatePointStarGeometry(direction)
     const { base, color, lastFlash, stop, bee, blink, size } = params
-    const uniforms = { ...buildUniforms({ base, color, lastFlash, stop, bee, blink }), size: { value: size } }
+    const uniforms = { ...buildUniforms({ base, color, lastFlash, stop, bee, blink }), size: { value: size }, pointPixels: this.pointPixels }
     this.time = uniforms.time
     this.material = new THREE.ShaderMaterial({
       defines: { BLINK: !!blink, BEE: !!bee, STOP: !!stop, COLORS: Array.isArray(color) && color.length, LAST_FLASH: !!lastFlash },
@@ -42,8 +43,9 @@ export class PointStar {
     this.mesh = new THREE.Points(geom, this.material)
     this.endTime = timeRangeMax(stop ? Math.min(stop.time, base.duration) : base.duration, base.burnRateRandomness || 0)
   }
-  update(time: number) {
+  update(time: number, pointPixels: number) {
     this.time.value = time
+    this.pointPixels.value = pointPixels
     const { base, stop, color, lastFlash, size } = this.params
     this.mesh.visible = 0 <= time && time <= this.endTime
     if (!this.mesh.visible) {

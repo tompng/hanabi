@@ -124,7 +124,7 @@ function generateShells(n: number) {
 type FireworkElement = {
   star: {
     mesh: THREE.Object3D
-    update: (t: number) => void
+    update: (t: number, pixels: number) => void
     brightness: { r: number; g: number; b: number }
     endTime: number
     dispose: () => void
@@ -177,11 +177,11 @@ export class Fireworks {
     this.scene.add(elem.star.mesh)
   }
 
-  update(time: number) {
+  update(time: number, pointPixels: number) {
     for (let i = 0; i < this.elements.length;) {
       const e = this.elements[i]
       if (time < e.startTime + e.star.endTime) {
-        e.star.update(time - e.startTime)
+        e.star.update(time - e.startTime, pointPixels)
         i++
       } else {
         this.scene.remove(e.star.mesh)

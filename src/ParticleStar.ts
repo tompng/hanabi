@@ -17,6 +17,7 @@ type ParticleTailStarParams = {
 
 export class ParticleTailStar {
   time: { value: number }
+  pointPixels = { value: 0 }
   mesh: THREE.Points
   brightness = BrightnessZero
   count: number
@@ -27,7 +28,7 @@ export class ParticleTailStar {
     this.count = direction.length * numParticles
     const geom = generateParticleStarGeometry(direction, numParticles)
     const { base, color, bee, stop, blink, particle, size } = params
-    const uniforms = { ...buildUniforms({ base, color, bee, blink, stop, particle }), size: { value: size } }
+    const uniforms = { ...buildUniforms({ base, color, bee, blink, stop, particle }), size: { value: size }, pointPixels: this.pointPixels }
     this.time = uniforms.time
     this.material = new THREE.ShaderMaterial({
       defines: { BLINK: !!blink, BEE: !!bee, STOP: !!stop, COLORS: Array.isArray(color) && color.length },
@@ -41,9 +42,10 @@ export class ParticleTailStar {
     this.maxPDuration = particle.duration * (1 + 0.5 * (particle.durationRandomness || 0))
     this.endTime = timeRangeMax(stop ? Math.min(stop.time, base.duration) : base.duration, base.burnRateRandomness || 0) + this.maxPDuration
   }
-  update(time: number) {
+  update(time: number, pointPixels: number) {
     this.time.value = time
-    const { base, stop, particle, color, size } = this.params
+    this.pointPixels.value = pointPixels
+    const { base, stop, color, size } = this.params
     const maxDuration = timeRangeMax(base.duration, base.burnRateRandomness || 0) + this.maxPDuration
     this.mesh.visible = 0 <= time && time <= this.endTime
     if (!this.mesh.visible) {
@@ -82,6 +84,7 @@ type ParticleSplashStarParams = {
 }
 export class ParticleSplashStar {
   time: { value: number }
+  pointPixels = { value: 0 }
   mesh: THREE.Points
   brightness = BrightnessZero
   count: number
@@ -92,7 +95,7 @@ export class ParticleSplashStar {
     this.count = direction.length * numParticles
     const geom = generateParticleStarGeometry(direction, numParticles)
     const { base, color, bee, blink, particle, stop, size } = params
-    const uniforms = {... buildUniforms({ base, color, bee, blink, stop, particle }), size: { value: size } }
+    const uniforms = {... buildUniforms({ base, color, bee, blink, stop, particle }), size: { value: size }, pointPixels: this.pointPixels }
     this.time = uniforms.time
     this.material = new THREE.ShaderMaterial({
       defines: { BLINK: !!blink, BEE: !!bee, STOP: true, COLORS: Array.isArray(color) && color.length },
@@ -106,8 +109,9 @@ export class ParticleSplashStar {
     this.maxLife = particle.duration * (1 + 0.5 * (particle.durationRandomness || 0))
     this.endTime = timeRangeMax(stop.time, base.burnRateRandomness || 0) + this.maxLife
   }
-  update(time: number) {
+  update(time: number, pointPixels: number) {
     this.time.value = time
+    this.pointPixels.value = pointPixels
     const { base, stop, particle, color, size } = this.params
     const t0 = timeRangeMin(stop.time, base.burnRateRandomness || 0)
     this.mesh.visible = t0 <= time && time <= this.endTime

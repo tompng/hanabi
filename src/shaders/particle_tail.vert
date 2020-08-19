@@ -37,7 +37,7 @@ void main() {
       gpos += beePositionAt(k, bt) * beeDirection * speed;
     }
   #endif
-  float fPointSize = resolution * size / distance(cameraPosition, gpos);
+  float fPointSize = pointPixels * size / distance(cameraPosition, gpos);
   gl_PointSize = clamp(fPointSize, 2.0, 16.0);
   float phase = t / duration / burnRate;
   brightness = fPointSize / gl_PointSize * (1.0 - t2 / rate);
