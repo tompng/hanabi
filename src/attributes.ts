@@ -121,8 +121,14 @@ function randomCrosses([nx, ny, nz]: N3D): [N3D, N3D] {
   return [[ax, ay, az], [bx, by, bz]]
 }
 
-export type StarBaseAttributes = ReturnType<typeof generateStarBaseAttributes>
+export type StarBaseAttributes = ReturnType<typeof generateNewStarBaseAttributes>
+const baseAttributesCache = new Map<number, StarBaseAttributes>()
 export function generateStarBaseAttributes(size: number) {
+  let attrs = baseAttributesCache.get(size)
+  if (!attrs) baseAttributesCache.set(size, attrs = generateNewStarBaseAttributes(size))
+  return attrs
+}
+function generateNewStarBaseAttributes(size: number) {
   const burnRateRandoms: number[] = []
   const speedRandoms: number[] = []
   const frictionRandoms: number[] = []
@@ -254,13 +260,6 @@ export function setStarBaseAttributes(geometry: THREE.BufferGeometry | THREE.Ins
     beeSpeedRandoms,
     beeDecayRandoms
   } = attrs
-  function set(name: string, arr: number[], n: 1 | 3) {
-    if (geometry instanceof THREE.InstancedBufferGeometry) {
-      geometry.setAttribute(name, new THREE.InstancedBufferAttribute(new Float32Array(arr), n))
-    } else {
-      geometry.setAttribute(name, new THREE.BufferAttribute(new Float32Array(arr), n))
-    }
-  }
   function add1(name: string, arr: number[]) {
     if (geometry instanceof THREE.InstancedBufferGeometry) {
       geometry.setAttribute(name, generateInstancedBufferAttribute1D(arr, repeat))

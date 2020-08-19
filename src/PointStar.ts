@@ -4,7 +4,8 @@ import vertexShader from './shaders/point_star.vert'
 import fragmentShader from './shaders/point_star.frag'
 import { StarBaseAttributes, setStarBaseAttributes, setStarBaseBlinkAttributes, ShaderBaseParams, ShaderBeeParams, ShaderBlinkParams, buildUniforms, ShaderStopParams, ShaderLastFlashParams, timeRangeMin, timeRangeMax, colorAt, BrightnessZero,
   generateEmptyPositionAttribute,
-  generateBufferAttribute3D
+  generateBufferAttribute3D,
+  generateStarBaseAttributes
 } from './attributes'
 
 type PointStarParams = {
@@ -24,9 +25,10 @@ export class PointStar {
   count: number
   endTime: number
   material: THREE.ShaderMaterial
-  constructor(geom: THREE.BufferGeometry, public params: PointStarParams) {
+  constructor(direction: N3D[], public params: PointStarParams) {
+    this.count = direction.length
+    const geom = generatePointStarGeometry(direction)
     const { base, color, lastFlash, stop, bee, blink, size } = params
-    this.count = geom.getAttribute('position').count
     const uniforms = { ...buildUniforms({ base, color, lastFlash, stop, bee, blink }), size: { value: size } }
     this.time = uniforms.time
     this.material = new THREE.ShaderMaterial({
@@ -82,8 +84,9 @@ export class PointStar {
   }
 }
 
-export function generatePointStarGeometry(direction: N3D[], attrs: StarBaseAttributes) {
+export function generatePointStarGeometry(direction: N3D[]) {
   const geometry = new THREE.BufferGeometry()
+  const attrs = generateStarBaseAttributes(direction.length)
   setStarBaseAttributes(geometry, attrs)
   setStarBaseBlinkAttributes(geometry, attrs)
   geometry.setAttribute('position', generateEmptyPositionAttribute(direction.length))

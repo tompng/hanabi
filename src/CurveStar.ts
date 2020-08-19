@@ -2,7 +2,7 @@ import * as THREE from 'three'
 import type { N3D } from './util'
 import vertexShader from './shaders/curve_star.vert'
 import fragmentShader from './shaders/curve_star.frag'
-import { setStarBaseAttributes, StarBaseAttributes, ShaderBeeParams, ShaderStopParams, buildUniforms, ShaderBaseParams, timeRangeMin, timeRangeMax, colorAt, BrightnessZero, generateInstancedBufferAttribute3D } from './attributes'
+import { setStarBaseAttributes, StarBaseAttributes, ShaderBeeParams, ShaderStopParams, buildUniforms, ShaderBaseParams, timeRangeMin, timeRangeMax, colorAt, BrightnessZero, generateInstancedBufferAttribute3D, generateStarBaseAttributes } from './attributes'
 
 type CurveStarParams = {
   base: ShaderBaseParams
@@ -18,9 +18,12 @@ export class CurveStar {
   time: { value: number }
   mesh: THREE.Mesh
   brightness = BrightnessZero
+  count: number
   endTime: number
   material: THREE.ShaderMaterial
-  constructor(geometry: THREE.BufferGeometry, public params: CurveStarParams, public count: number) {
+  constructor(direction: N3D[], public params: CurveStarParams) {
+    this.count = direction.length
+    const geometry = generateCurveStarGeometry(direction)
     const { base, color, stop, bee, curveFriction, widthStart, widthEnd, curveDelay } = params
     const uniforms = {
       ...buildUniforms({ base, color, stop, bee }),
@@ -81,11 +84,12 @@ function generateLineAttributes(step: number) {
   return attr
 }
 
-export function generateCurveStarGeometry(direction: N3D[], attrs: StarBaseAttributes, lineStep: number = 8) {
+export function generateCurveStarGeometry(direction: N3D[], lineStep: number = 8) {
   const geometry = new THREE.InstancedBufferGeometry()
   const ds: number[] = []
   direction.forEach(p => ds.push(...p))
   geometry.setAttribute('position', generateLineAttributes(lineStep))
+  const attrs = generateStarBaseAttributes(direction.length)
   setStarBaseAttributes(geometry, attrs)
   geometry.setAttribute('direction', generateInstancedBufferAttribute3D(direction))
   geometry.boundingSphere = new THREE.Sphere(undefined, 1024)

@@ -3,7 +3,7 @@ import type { N3D } from './util'
 import tailVertexShader from './shaders/particle_tail.vert'
 import splashVertexShader from './shaders/particle_splash.vert'
 import fragmentShader from './shaders/point_star.frag'
-import { StarBaseAttributes, setStarBaseAttributes, generateStarParticleAttributes, setStarParticleAttributes, ShaderBaseParams, ShaderBeeParams, ShaderBlinkParams, ShaderStopParams, ShaderParticleParams, buildUniforms, timeRangeMin, timeRangeMax, colorAt, colorMult, BrightnessZero, generateEmptyPositionAttribute, generateBufferAttribute3D } from './attributes'
+import { StarBaseAttributes, setStarBaseAttributes, generateStarParticleAttributes, setStarParticleAttributes, ShaderBaseParams, ShaderBeeParams, ShaderBlinkParams, ShaderStopParams, ShaderParticleParams, buildUniforms, timeRangeMin, timeRangeMax, colorAt, colorMult, BrightnessZero, generateEmptyPositionAttribute, generateBufferAttribute3D, generateStarBaseAttributes } from './attributes'
 
 type ParticleTailStarParams = {
   base: ShaderBaseParams
@@ -23,9 +23,10 @@ export class ParticleTailStar {
   endTime: number
   maxPDuration: number
   material: THREE.ShaderMaterial
-  constructor(geom: THREE.BufferGeometry, public params: ParticleTailStarParams) {
+  constructor(direction: N3D[], numParticles: number, public params: ParticleTailStarParams) {
+    this.count = direction.length * numParticles
+    const geom = generateParticleStarGeometry(direction, numParticles)
     const { base, color, bee, stop, blink, particle, size } = params
-    this.count = geom.getAttribute('position').count
     const uniforms = { ...buildUniforms({ base, color, bee, blink, stop, particle }), size: { value: size } }
     this.time = uniforms.time
     this.material = new THREE.ShaderMaterial({
@@ -87,9 +88,10 @@ export class ParticleSplashStar {
   endTime: number
   maxLife: number
   material: THREE.ShaderMaterial
-  constructor(geom: THREE.BufferGeometry, public params: ParticleSplashStarParams & { stop: ShaderStopParams }) {
+  constructor(direction: N3D[], numParticles: number, public params: ParticleSplashStarParams & { stop: ShaderStopParams }) {
+    this.count = direction.length * numParticles
+    const geom = generateParticleStarGeometry(direction, numParticles)
     const { base, color, bee, blink, particle, stop, size } = params
-    this.count = geom.getAttribute('position').count
     const uniforms = {... buildUniforms({ base, color, bee, blink, stop, particle }), size: { value: size } }
     this.time = uniforms.time
     this.material = new THREE.ShaderMaterial({
@@ -130,8 +132,9 @@ export class ParticleSplashStar {
   }
 }
 
-export function generateParticleStarGeometry(direction: N3D[], attrs: StarBaseAttributes, particles: number = 64) {
+export function generateParticleStarGeometry(direction: N3D[], particles: number = 64) {
   const geometry = new THREE.BufferGeometry()
+  const attrs = generateStarBaseAttributes(direction.length)
   setStarBaseAttributes(geometry, attrs, particles)
   const pattrs = generateStarParticleAttributes(particles * direction.length)
   setStarParticleAttributes(geometry, pattrs)

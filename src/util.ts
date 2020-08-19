@@ -4,6 +4,18 @@ export function sample<T>(arr: T[]): T {
   return arr[Math.floor(Math.random() * arr.length)]
 }
 
+export function sampleN<T>(arr: T[], n: number): T[] {
+  const converts = new Map<number, T>()
+  const out: T[] = []
+  for (let i = 0; i < n; i++) {
+    const j = Math.floor((arr.length - i) * Math.random())
+    const k = arr.length - i - 1
+    out.push(converts.get(j) || arr[j])
+    converts.set(j, converts.get(k) || arr[k])
+  }
+  return out
+}
+
 export function sphereRandom(): N3D {
   while (true) {
     const x = 2 * Math.random() - 1
@@ -82,7 +94,7 @@ export function randomRotatePoints(points: N3D[]) {
   const c1 = Math.cos(th1), s1 = Math.sin(th1)
   const c2 = Math.cos(th2), s2 = Math.sin(th2)
   const c3 = Math.cos(th3), s3 = Math.sin(th3)
-  points.forEach(p => {
+  return points.map(p => {
     const [x, y, z] = p
     const x1 = x * c1 - y * s1
     const y1 = x * s1 + y * c1
@@ -90,9 +102,7 @@ export function randomRotatePoints(points: N3D[]) {
     const z2 = y1 * s2 + z * c2
     const z3 = z2 * c3 - x1 * s3
     const x3 = z2 * s3 + x1 * c3
-    p[0] = x3
-    p[1] = y2
-    p[2] = z3
+    return [x3, y2, z3]
   })
 }
 

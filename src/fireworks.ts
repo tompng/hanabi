@@ -1,5 +1,5 @@
 import * as THREE from 'three'
-import { sphereRandom, sphereSurfaceRandom, evenSpherePoints, N3D, peakTime, positionAt, velocityAt } from './util'
+import { sample, sphereRandom, sphereSurfaceRandom, evenSpherePoints, N3D, peakTime, positionAt, velocityAt } from './util'
 import {
   ShaderBeeParams,
   ShaderBaseParams,
@@ -159,6 +159,13 @@ function bulletParameters(x: number, y: number, dx: number, dy: number, z: numbe
     duration: stopTime * 2
   }
   return { stopTime, stopPosition, stopVelocity, base }
+}
+
+const color1 = [new THREE.Color('#884'), new THREE.Color('#f84'), new THREE.Color('white')]
+const color2 = new THREE.Color('#a66')
+const color3 = [new THREE.Color('white'), new THREE.Color('#faa')]
+function randomColor() {
+  return  sample([color1, color2, color3])
 }
 
 export class Fireworks {
