@@ -69,7 +69,6 @@ THREE.ShaderChunk['particle_params'] = blinkParticleChunk
 
 const renderer = new THREE.WebGLRenderer()
 renderer.autoClear = false
-// renderer.debug.checkShaderErrors = true
 const width = 800
 const height = 600
 renderer.setSize(width, height)
@@ -147,7 +146,33 @@ renderer.domElement.addEventListener('pointerdown', e => {
 
 const canvas = renderer.domElement
 canvas.style.touchAction = 'none'
+canvas.style.position = 'fixed'
+canvas.style.left = '0'
+canvas.style.top = '0'
+canvas.style.width = '100%'
+canvas.style.height = '100%'
 document.body.appendChild(canvas)
+let resizeTimer: number | null = null
+function doResize() {
+  resizeTimer = null
+  const size = new THREE.Vector2()
+  renderer.getSize(size)
+  const width = window.innerWidth
+  const height = window.innerHeight
+  if (size.x === width && size.y === height) return
+  renderer.setSize(width, height)
+  camera.width = width
+  camera.height = height
+  camera.update()
+  water.resize(width, height, camera.fov)
+}
+function resized() {
+  if (resizeTimer) clearTimeout(resizeTimer)
+  resizeTimer = setTimeout(doResize, 100)
+}
+window.addEventListener('orientationchange', resized)
+window.addEventListener('resize', resized)
+doResize()
 
 const capturer = new Capturer(renderer, 800, 600)
 let capturing = false

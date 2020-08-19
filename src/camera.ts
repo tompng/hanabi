@@ -13,6 +13,8 @@ export class Camera {
   update() {
     this.aspect = this.width / this.height
     this.mainCamera.fov = this.fov
+    const fovtan = Math.min(0.75, 0.9 * this.height / this.width)
+    this.fov = 2 * Math.atan(fovtan) * 180 / Math.PI
     this.waterCamera.fov = 2 * 180 / Math.PI * Math.atan(Math.tan(Math.PI / 180 * this.fov / 2) / this.waveCameraSafe)
     this.pointPixels = this.height / Math.tan(Math.PI / 180 * this.fov / 2)
     ;[this.mainCamera, this.waterCamera].forEach(camera => {

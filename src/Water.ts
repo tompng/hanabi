@@ -24,7 +24,8 @@ export class Water {
     wave: { value: null as THREE.Texture | null },
     sky: { value: null as THREE.Texture | null },
     ground: { value: null as THREE.Texture | null },
-    resolution: { value: null as THREE.Vector2 | null }
+    resolution: { value: null as THREE.Vector2 | null },
+    fovA: { value: null as THREE.Vector2 | null }
   }
   constructor(width: number, height: number) {
     this.skyTarget = new THREE.WebGLRenderTarget(width, height)
@@ -38,6 +39,13 @@ export class Water {
       })
     )
     this.uniforms.resolution.value = new THREE.Vector2(width, height)
+  }
+  resize(width: number, height: number, fov: number) {
+    this.skyTarget.setSize(width, height)
+    this.groundTarget.setSize(width, height)
+    this.uniforms.resolution.value = new THREE.Vector2(width, height)
+    const a = Math.tan(fov / 180.0 * Math.PI / 2.0)
+    this.uniforms.fovA.value = new THREE.Vector2(height / width / a, 1 / a);
   }
   update(time: number) {
     this.uniforms.time.value = time

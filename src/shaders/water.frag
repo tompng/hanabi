@@ -3,8 +3,7 @@ uniform sampler2D wave, sky, ground;
 uniform vec2 resolution;
 varying vec2 pos2d;
 
-const float aspect = 3.0 / 4.0;
-const float a = tan(75.0 / 180.0 * 3.1415926539 / 2.0);
+uniform vec2 fovA;
 const float safe = 0.8;
 void main() {
   vec2 coord = 0.5 + (gl_FragCoord.xy / resolution - 0.5) * safe;
@@ -25,8 +24,8 @@ void main() {
   float zsky = 1000.0;
   vec4 gcoord4 = viewMatrix * vec4(mix(cameraPosition.xy, pos2d + ref.xy * zground / ref.z, cameraPosition.z / (cameraPosition.z + zground)), 0, 1);
   vec4 scoord4 = viewMatrix * vec4(mix(cameraPosition.xy, pos2d + ref.xy * zsky / ref.z, cameraPosition.z / (cameraPosition.z + zsky)), 0, 1);
-  vec2 gcoord = vec2(0.5) + vec2(-gcoord4.x * aspect, gcoord4.y) / gcoord4.z / a * 0.5 * safe;
-  vec2 scoord = vec2(0.5) + vec2(-scoord4.x * aspect, scoord4.y) / scoord4.z / a * 0.5 * safe;
+  vec2 gcoord = vec2(0.5) + vec2(-gcoord4.x, gcoord4.y) * fovA / gcoord4.z * 0.5 * safe;
+  vec2 scoord = vec2(0.5) + vec2(-scoord4.x, scoord4.y) * fovA / scoord4.z * 0.5 * safe;
   vec4 gcolor = texture2D(ground, gcoord);
   vec4 scolor = texture2D(sky, scoord);
   gl_FragColor = (gcolor.a * gcolor + (1.0 - gcolor.a) * scolor) * (1.0 + dot(view, norm)) * 0.9;
