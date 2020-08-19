@@ -92,8 +92,25 @@ const rand = () => {
 }
 export class Land {
   baseTriangles: Triangle[] = []
+  zmap: number[][] = []
   constructor(public xaxis: AxisInfo, public yaxis: AxisInfo, public zmin: number, public zfunc: (x: number, y: number) => number) {
     this.generateBaseTriangles()
+  }
+  zAt(x: number, y: number) {
+    x = Math.min(Math.max(this.xaxis.min, x), this.xaxis.max)
+    y = Math.min(Math.max(this.yaxis.min, y), this.yaxis.max)
+    let fi = (x - this.xaxis.min) / (this.xaxis.max - this.xaxis.min) * this.xaxis.step
+    let fj = (y - this.yaxis.min) / (this.yaxis.max - this.yaxis.min) * this.yaxis.step
+    const i = Math.min(Math.floor(fi), this.xaxis.step - 1)
+    const j = Math.min(Math.floor(fj), this.yaxis.step - 1)
+    fi -= i
+    fj -= j
+    return (
+      (1 - fi) * (1 - fj) * this.zmap[i][j]
+      + fi * (1 - fj) * this.zmap[i + 1][j]
+      + (1 - fi) * fj * this.zmap[i][j + 1]
+      + fi * fj * this.zmap[i + 1][j + 1]
+    )
   }
   generateBaseTriangles() {
     const { xaxis, yaxis, zmin, zfunc } = this
@@ -105,6 +122,7 @@ export class Land {
       })
     })
     addNoise(vertices)
+    this.zmap = vertices.map(vs => vs.map(v => v.z))
     const dirs = [[-1,-1],[0,-1],[1,-1],[1,0],[1,1],[0,1],[-1,1],[-1,0]] as const
     for (let i = 0; i <= xaxis.step; i++) {
       for (let j = 0; j <= yaxis.step; j++) {

@@ -26,8 +26,6 @@ const landUniforms = {
 }
 const mesh = new THREE.Mesh(
   landGeometry,
-  // new THREE.MeshPhongMaterial({ color: 'white' })
-  // new THREE.MeshBasicMaterial({ color: 'white', side: THREE.DoubleSide })
   new THREE.ShaderMaterial({
     uniforms: landUniforms,
     vertexShader: `
@@ -87,15 +85,59 @@ const camera = new Camera(width, height)
 const cameraR = 80
 camera.position.x = -cameraR
 camera.position.z = 1
-renderer.domElement.onmousemove = e => {
-  const r = cameraR
-  const th = e.offsetX / 100
-  camera.position.x = -r * Math.cos(th)
-  camera.position.y = -r * Math.sin(th)
-  camera.position.z = 160 * (1 - e.offsetY / renderer.domElement.offsetHeight) + 1
-  camera.horizontalAngle = th
-  camera.verticalAngle = Math.atan((50 - camera.position.z) / cameraR)
+camera.verticalAngle = 0.5
+const destination = { x: camera.position.x, y: camera.position.y }
+const lscale = 256
+renderer.domElement.onmousedown = e => {
+  const startX = e.pageX
+  const startY = e.pageY
+  const startHAngle = camera.horizontalAngle
+  const startVAngle = camera.verticalAngle
+  let maxMove = 0
+  const time = performance.now()
+  function mousemove(e: MouseEvent) {
+    const dx = e.pageX - startX
+    const dy = e.pageY - startY
+    maxMove = Math.max(maxMove, Math.abs(dx), Math.abs(dy))
+    if (maxMove < 4) return
+    const scale = camera.fov / renderer.domElement.offsetHeight * Math.PI / 180
+    camera.horizontalAngle = startHAngle + dx * scale
+    camera.verticalAngle = Math.min(Math.max(-Math.PI / 3, startVAngle + dy * scale), Math.PI / 3)
+  }
+  function mouseup(e: MouseEvent) {
+    window.removeEventListener('mousemove', mousemove)
+    window.removeEventListener('mouseup', mouseup)
+    if (maxMove >= 4 || performance.now() - time > 500) return
+    const el = renderer.domElement
+    const rx = (e.pageX - el.offsetLeft) / el.offsetWidth
+    const ry = (e.pageY - el.offsetTop) / el.offsetHeight
+    const view = camera.viewAt(rx, ry)
+    const rxy = Math.hypot(view.x, view.y)
+    const maxXYDistance = 40
+    let t = rxy > maxXYDistance ? 1 : maxXYDistance / rxy
+    let moveT: number | null = null
+    if (view.z < 0) {
+      const t0 = -camera.position.z / view.z
+      moveT = t = t0
+    }
+    for (let k = 0; k <= 100; k++) {
+      const t2 = t * k / 100
+      const cvz = camera.position.z + t2 * view.z
+      const z = Math.max(0, lscale * land.zAt((camera.position.x + t2 * view.x) / lscale, (camera.position.y + t2 * view.y) / lscale))
+      if (z > cvz) {
+        moveT = t2
+        break
+      }
+    }
+    if (moveT != null) {
+      destination.x = camera.position.x + moveT * view.x
+      destination.y = camera.position.y + moveT * view.y
+    }
+  }
+  window.addEventListener('mousemove', mousemove)
+  window.addEventListener('mouseup', mouseup)
 }
+
 const canvas = renderer.domElement
 document.body.appendChild(canvas)
 
@@ -132,6 +174,17 @@ button.onclick = () => {
 let timeWas = performance.now() / 1000
 function animate() {
   const time = performance.now() / 1000
+
+  const dstx = destination.x - camera.position.x
+  const dsty = destination.y - camera.position.y
+  const dstr = Math.hypot(dstx, dsty)
+  const dstt = 1 / Math.max(dstr, 1)
+  camera.position.x += dstx * dstt
+  camera.position.y += dsty * dstt
+  camera.position.x = Math.min(Math.max(-lscale, camera.position.x), lscale)
+  camera.position.y = Math.min(Math.max(-lscale, camera.position.y), lscale)
+  camera.position.z = Math.max(0, lscale * land.zAt(camera.position.x / lscale, camera.position.y / lscale)) + 1
+
   camera.update()
   if (Math.floor(timeWas / 0.2) !== Math.floor(time / 0.2)) {
     if (Math.random() < 0.1) add(time)
