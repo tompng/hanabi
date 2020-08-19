@@ -12,9 +12,7 @@ void main() {
   vec3 norm = normalize(vec3(
     (
       + texture2D(wave, +pos2d * 0.297 + vec2(0, 0.2 * time)).xy
-      - texture2D(wave, -pos2d * 0.371 + vec2(0, 0.2 * time)).xy
-      + texture2D(wave, +pos2d * 0.097 + vec2(0.05 * time, 0)).xy
-      - texture2D(wave, -pos2d * 0.071 + vec2(0.05 * time, 0)).xy
+      - texture2D(wave, mat2(-0.341, 0.131, -0.131, -0.341) * pos2d + vec2(0, 0.2 * time)).xy
     ) * wind,
     4
   ));

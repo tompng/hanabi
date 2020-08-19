@@ -69,22 +69,19 @@ THREE.ShaderChunk['particle_params'] = blinkParticleChunk
 
 const renderer = new THREE.WebGLRenderer()
 renderer.autoClear = false
-const width = 800
-const height = 600
-renderer.setSize(width, height)
 const scene = new THREE.Scene()
 scene.add(skyMesh)
 const fireworks = new Fireworks(scene)
 const groundScene = new THREE.Scene()
-const water = new Water(width, height)
+const water = new Water(innerWidth, innerHeight)
 const waterScene = new THREE.Scene()
 waterScene.add(water.mesh)
 groundScene.add(mesh)
-const camera = new Camera(width, height)
+const camera = new Camera(innerWidth, innerHeight)
 const cameraR = 80
 camera.position.x = -cameraR
 camera.position.z = 1
-camera.verticalAngle = 0.5
+camera.verticalAngle = 0.2
 const move = { from: { x: camera.position.x, y: camera.position.y }, to: { x: camera.position.x, y: camera.position.y }, time: 0 }
 const lscale = 256
 let currentPointerId: null | number = null
@@ -174,32 +171,34 @@ window.addEventListener('orientationchange', resized)
 window.addEventListener('resize', resized)
 doResize()
 
-const capturer = new Capturer(renderer, 800, 600)
-let capturing = false
+let capturer: Capturer | null = null
 let captureCanvases = [...new Array(4)].map(() => document.createElement('canvas'))
 const button = document.createElement('button')
 button.textContent = 'capture'
 document.body.appendChild(button)
 button.onclick = () => {
-  if (capturing) return
-  captureCanvases.forEach(c => {
+  if (capturer) return
+  capturer = new Capturer(renderer, window.innerWidth, window.innerHeight)
+  captureCanvases.forEach((c, i) => {
+    c.style.cssText = `position:fixed;top:0;`
+    c.style.left = (i % 2 * 50) + '%'
+    c.style.top = (Math.floor(i / 2) * 50) + '%'
     document.body.appendChild(c)
-    c.style.width = '200px'
+    c.style.width = innerWidth / 2 + 'px'
+    c.style.height = innerHeight / 2 + 'px'
     c.getContext('2d')?.clearRect(0, 0, c.width, c.height)
   })
-  capturing = true
   let n = 0
   const timer = setInterval(() => {
     n++
     const msecs = [100, 1000, 2000, 4000]
     const i = msecs.findIndex(v => n == (v / 100))
     if (i === -1) return
-    const msec = msecs[i]
-    capturer.capture(captureCanvases[i], 1.5 * Math.pow(msec / 1000, 0.2))
+    capturer?.capture(captureCanvases[i], 1)
     if (i === 3) {
       clearInterval(timer)
-      capturing = false
-      capturer.reset()
+      capturer?.dispose()
+      capturer = null
     }
   }, 100)
 }
@@ -221,7 +220,7 @@ function animate() {
 
   fireworks.update(time, camera.pointPixels)
   const brightness = fireworks.brightness()
-  const ll = 0.001
+  const ll = 0.0002
   landUniforms.color.value = new THREE.Color(brightness.r * ll, brightness.g * ll, brightness.b * ll)
 
   function render() {
@@ -241,7 +240,7 @@ function animate() {
     renderer.render(waterScene, camera.mainCamera)
     renderer.render(scene, camera.mainCamera)
   }
-  if (capturing) {
+  if (capturer) {
     capturer.add(render)
     capturer.copy(capturer.input.texture, null)
   } else {

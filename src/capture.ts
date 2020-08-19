@@ -136,8 +136,8 @@ export class Capturer {
     this.renderer.readRenderTargetPixels(this.output, 0, 0, this.width, this.height, buffer)
     canvas.width = this.width
     canvas.height = this.height
-    canvas.getContext('2d')!.fillRect(0,0,800,600)
     const ctx = canvas.getContext('2d')!
+    ctx.fillRect(0, 0, this.width, this.height)
     const imgdata = ctx.createImageData(this.width, this.height)
     for (let y = 0; y < this.height; y++) {
       const stride = 4 * this.width
