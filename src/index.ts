@@ -14,6 +14,12 @@ import { Water } from './Water'
 import { skyMesh } from './sky'
 import { Fireworks } from './fireworks'
 import { Camera } from './camera'
+import { playPyu, playBang } from './sound'
+
+document.body.onclick = () => {
+  playBang()
+  document.body.onclick = null
+}
 const land = new Land({min: -1, max: 1, step: 256},{min: -1, max: 1, step: 256},0,(x,y)=>
   (8*(1-x)*(1+x)*(1-y)*(1+y)*(1+Math.sin(8*x+4*y)+Math.sin(2*x-7*y+1)+Math.sin(9*x+11*y+2)+Math.sin(13*x-12*y+3)-6/(1+4*(x**2+y**2))+2*x)-1) / 128
 )
@@ -291,11 +297,14 @@ function add(time: number) {
     friction: 0.5,
     duration: 100
   }
-  const pt = peakTime(60, 0.5)
+  const pt = peakTime(60, 0.5) * (1 - 0.1 * Math.random())
   const stop = starStops(singleDir, singleAttr, bulletBaseParams, null, pt)[0]
 
   const bullet = new ParticleTailStar(singleDir, 64, { base: bulletBaseParams, stop: { time: pt }, particle: particleTailParams, color: new THREE.Color(0.1,0.1,0.1), size: 0.2 })
   fireworks.add({ star: bullet, startTime: time })
+
+  if (Math.random() < 0.2) fireworks.schedule(time, playPyu)
+  fireworks.schedule(time + pt, playBang)
 
   const baseParams: ShaderBaseParams = {
     center: new THREE.Vector3(...stop.p),

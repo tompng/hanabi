@@ -1,0 +1,162 @@
+export function waveToDataURL(wave: number[] | Float32Array) {
+  const time = performance.now()
+  const f = (n: number) => '%' + (n >> 4).toString(16) + (n & 0xf).toString(16)
+  const f2 = (n: number) => f(n & 0xff) + f(n >> 8)
+  const f4 = (n: number) => f2(n & 0xffff) + f2(n >> 16)
+  const wdata: string[] = []
+  wave.forEach((v: number) => {
+    v = Math.round(0x8000 * v);
+    wdata.push(f2(v > 0x7fff ? 0x7fff : v < -0x7fff ? 0x8000 : v < 0 ? v + 0x10000 : v))
+  })
+  return 'data:audio/wav,' + [
+    'RIFF',
+    f4(wave.length * 2 + 32),
+    'WAVEfmt%20',
+    f4(16),
+    f4(0x10001),
+    f4(44100),
+    f4(88200),
+    f4(0x100004),
+    'data',
+    f4(wave.length * 2),
+    wdata.join('')
+  ].join('')
+}
+
+function createPeriodicWave(w: number, hz: number, length: number = 44100 * 5) {
+  const waveData = new Float32Array(length)
+  const th = 2 * Math.PI * hz / 44100
+  const ex = Math.exp(-w * hz / 44100 / 2)
+  const ac = ex * Math.cos(th)
+  const as = ex * Math.sin(th)
+  const bc = ex * ac
+  const bs = ex * as
+  const cc = ex * bc
+  const cs = ex * bs
+  const scale = Math.sqrt(hz * w)
+  let ar = 0, ai = 0
+  let br = 0, bi = 0
+  let cr = 0, ci = 0
+  for(let i = 0; i < length; i++) {
+    const r = waveData[i] = 2 * Math.random() - 1
+    const _ar = ar
+    ar = _ar * ac - ai * as + r
+    ai = ai * ac + _ar * as
+    const _br = br
+    br = _br * bc - bi * bs + r
+    bi = bi * bc + _br * bs
+    const _cr = cr
+    cr = _cr * cc - ci * cs + r
+    ci = ci * cc + _cr * cs
+  }
+  const cosn = Math.cos(length * th)
+  const sinn = Math.sin(length * th)
+  const acn = Math.pow(ex, length) * cosn
+  const asn = Math.pow(ex, length) * sinn
+  const bcn = Math.pow(ex, 2 * length) * cosn
+  const bsn = Math.pow(ex, 2 * length) * sinn
+  const ccn = Math.pow(ex, 3 * length) * cosn
+  const csn = Math.pow(ex, 3 * length) * sinn
+  const _ar = ar, raa = (1 - acn) ** 2 + asn ** 2
+  ar = (_ar * (1 - acn) - ai * asn) / raa
+  ai = (ai * (1 - acn) + _ar * asn) / raa
+  const _br = br, rbb = (1 - bcn) ** 2 + bsn ** 2
+  br = (_br * (1 - bcn) - bi * bsn) / rbb
+  bi = (bi * (1 - bcn) + _br * bsn) / rbb
+  const _cr = cr, rcc = (1 - ccn) ** 2 + csn ** 2
+  cr = (_cr * (1 - ccn) - ci * csn) / rcc
+  ci = (ci * (1 - ccn) + _cr * csn) / rcc
+  for (let i = 0; i < length; i++) {
+    const r = waveData[i]
+    const _ar = ar
+    ar = _ar * ac - ai * as + r
+    ai = ai * ac + _ar * as
+    const _br = br
+    br = _br * bc - bi * bs + r
+    bi = bi * bc + _br * bs
+    const _cr = cr
+    cr = _cr * cc - ci * cs + r
+    ci = ci * cc + _cr * cs
+    waveData[i] = (2 * br - ar - cr) * scale
+  }
+  return waveData
+}
+
+function waveScale(wave: Float32Array, length: number, volume: (i: number) => number) {
+  const wlen = wave.length
+  const output = new Float32Array(length)
+  for (let i = 0; i < length; i++) output[i] = volume(i) * wave[i % wlen]
+  return output
+}
+
+function wavePickScale(wave: Float32Array, length: number, pick: (i: number) => number, volume: (i: number) => number) {
+  const wlen = wave.length
+  const output = new Float32Array(length)
+  function at(i: number) {
+    i -= Math.floor(i / wlen) * wlen
+    const j = Math.floor(i)
+    const t = i - j
+    const a = wave[j]
+    const b = wave[(j + 1) % wlen]
+    const da = (b - wave[(j + wlen - 1) % wlen]) / 2
+    const db = (wave[(j + 2) % wlen] - a) / 2
+    return a + (b - a) * (3 - 2 * t) * t ** 2 + da * t * (t - 1) ** 2 + db * (t - 1) * t ** 2
+  }
+  for (let i = 0; i < length; i++) output[i] = volume(i) * at(pick(i))
+  return output
+}
+function normalizeWave(wave: Float32Array) {
+  let max = 0
+  wave.forEach(v => max = Math.max(max, Math.abs(v)))
+  wave.forEach((v, i) => wave[i] = v / max)
+  return wave
+}
+
+function createPyuSound() {
+  const wave = createPeriodicWave(0.1 + 0.05 * Math.random(), 1800 + 400 * Math.random(), 20000)
+  const length = 44100 * 4
+  function pick(i: number) {
+    const t = i / length
+    return (t + 0.2 * t * (1 - t)) * length
+  }
+  function volume(i: number) {
+    const t = i / length
+    return t * (1 - t) ** 2
+  }
+  return normalizeWave(wavePickScale(wave, length, pick, volume))
+}
+
+function createBangSound() {
+  const wave = createPeriodicWave(20 + 10 * Math.random(), 100 + 100 * Math.random(), 20000)
+  return normalizeWave(waveScale(wave, 44100 * 4, i => Math.min(i / 100, Math.exp(-i / 20000))))
+}
+
+const bangSounds = [...new Array(8)].map(() => {
+  const t = new Date()
+  const audio = new Audio()
+  audio.src = waveToDataURL(createBangSound())
+  console.log(new Date().getTime()-t.getTime())
+  return audio
+})
+
+const pyuSounds = [...new Array(8)].map(() => {
+  const t = new Date()
+  const audio = new Audio()
+  audio.src = waveToDataURL(createPyuSound())
+  console.log(new Date().getTime()-t.getTime())
+  return audio
+})
+
+export function playBang() {
+  const s = bangSounds.shift()!
+  s.volume = 0.5
+  bangSounds.push(s)
+  s.play()
+}
+
+export function playPyu() {
+  const s = pyuSounds.shift()!
+  pyuSounds.push(s)
+  s.volume = 0.02
+  s.play()
+}

@@ -170,6 +170,7 @@ function randomColor() {
 
 export class Fireworks {
   elements: FireworkElement[] = []
+  schedules: { time: number; f: () => void }[] = []
   constructor(public scene: THREE.Scene) {}
 
   add(elem: FireworkElement) {
@@ -177,7 +178,21 @@ export class Fireworks {
     this.scene.add(elem.star.mesh)
   }
 
+  schedule(time: number, f: () =>  void) {
+    this.schedules.push({ time, f })
+  }
+
   update(time: number, pointPixels: number) {
+    for (let i = 0; i < this.schedules.length; i++) {
+      const s = this.schedules[i]
+      if (time < s.time) {
+        i++
+        continue
+      }
+      s.f()
+      this.schedules[i] = this.schedules[this.schedules.length - 1]
+      this.schedules.pop()
+    }
     for (let i = 0; i < this.elements.length;) {
       const e = this.elements[i]
       if (time < e.startTime + e.star.endTime) {
