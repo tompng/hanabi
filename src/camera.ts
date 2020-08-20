@@ -31,20 +31,16 @@ export class Camera {
       camera.matrixWorldNeedsUpdate = true
     })
   }
-  setAudioPosition(audioContext: AudioContext) {
-    audioContext.listener.setPosition(this.position.x, this.position.y, this.position.z)
+  listenerPosition() {
     const hcos = Math.cos(this.horizontalAngle)
     const hsin = Math.sin(this.horizontalAngle)
     const vcos = Math.cos(this.verticalAngle)
     const vsin = Math.sin(this.verticalAngle)
-    audioContext.listener.setOrientation(
-      vcos * hcos,
-      vcos * hsin,
-      vsin,
-      -vsin*hcos,
-      -vsin*hsin,
-      vcos,
-    )
+    return {
+      position: this.position,
+      view: { x: vcos * hcos, y: vcos * hsin, z: vsin },
+      up: { x: -vsin * hcos, y: -vsin * hsin, z: vcos }
+    }
   }
   viewAt(xratio: number, yratio: number) {
     const s = Math.tan(this.fov * Math.PI / 180 / 2)

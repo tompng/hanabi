@@ -14,9 +14,14 @@ import { Water } from './Water'
 import { skyMesh } from './sky'
 import { Fireworks } from './fireworks'
 import { Camera } from './camera'
-import { audioContext, initializeAudioContext, playPyu, playBang } from './sound'
+import { audioContext, setAudioListener, toggleMute, playPyu, playBang } from './sound'
 
-document.body.onclick = initializeAudioContext
+const soundButton = document.createElement('button')
+;(window as any).ac = audioContext
+soundButton.textContent = 'sound'
+soundButton.style.cssText = 'position:fixed;z-index:9999;left:0;top:0;'
+document.body.appendChild(soundButton)
+soundButton.onclick = () => toggleMute()
 const land = new Land({min: -1, max: 1, step: 256},{min: -1, max: 1, step: 256},0,(x,y)=>
   (8*(1-x)*(1+x)*(1-y)*(1+y)*(1+Math.sin(8*x+4*y)+Math.sin(2*x-7*y+1)+Math.sin(9*x+11*y+2)+Math.sin(13*x-12*y+3)-6/(1+4*(x**2+y**2))+2*x)-1) / 128
 )
@@ -216,7 +221,7 @@ function animate() {
   camera.position.z = Math.max(0, lscale * land.maxZAt(camera.position.x / lscale, camera.position.y / lscale)) + 1
 
   camera.update()
-  if (audioContext) camera.setAudioPosition(audioContext)
+  setAudioListener(camera.listenerPosition())
   if (Math.floor(timeWas / 0.2) !== Math.floor(time / 0.2)) {
     if (Math.random() < 0.1) add(time)
   }

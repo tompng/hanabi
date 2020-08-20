@@ -2,12 +2,12 @@ import { sample } from './util'
 
 export const audioContext: AudioContext | undefined = (() => {
   try {
-    return new window.AudioContext()
+    if (window.AudioContext) return new window.AudioContext()
+    return new (window as any).webkitAudioContext()
   } catch (e) {}
 })()
 
 export function waveToDataURL(wave: number[] | Float32Array) {
-  const time = performance.now()
   const f = (n: number) => '%' + (n >> 4).toString(16) + (n & 0xf).toString(16)
   const f2 = (n: number) => f(n & 0xff) + f(n >> 8)
   const f4 = (n: number) => f2(n & 0xffff) + f2(n >> 16)
@@ -116,7 +116,7 @@ function wavePickScale(wave: Float32Array, length: number, pick: (i: number) => 
 function normalizeWave(wave: Float32Array) {
   let max = 0
   wave.forEach(v => max = Math.max(max, Math.abs(v)))
-  wave.forEach((v, i) => wave[i] = v / max))
+  wave.forEach((v, i) => wave[i] = v / max)
   return wave
 }
 
@@ -136,7 +136,7 @@ function createPyuSound() {
 
 function createBangSound() {
   const wave = createPeriodicWave(20 + 10 * Math.random(), 100 + 100 * Math.random(), 20000)
-  return normalizeWave(waveScale(wave, 44100 * 4, i => Math.min(i / 400, Math.exp(-i / 20000))))
+  return normalizeWave(waveScale(wave, 44100 * 5, i => Math.min(i / 400, Math.exp(-i / 24000))))
 }
 
 const bangSounds = [...new Array(8)].map(() => createAudioBufferFloatArray(createBangSound()))
@@ -150,24 +150,33 @@ function createAudioBufferFloatArray(wave: Float32Array) {
   return buffer
 }
 
-export function initializeAudioContext() {
-  if (audioContext) audioContext.resume()
+const listenerPosition = { x: 0, y: 0, z: 0 }
+let muted = true
+export function toggleMute(flag?: boolean) {
+  if (flag === undefined) flag = !muted
+  muted = flag
+  if (muted) {
+    audioContext?.suspend()
+  } else {
+    audioContext?.resume()
+  }
+  return muted
 }
 
 export function playBuffer(buffer: AudioBuffer, volume: number, position: { x: number; y: number; z: number }) {
-  if (!audioContext) return
+  if (!audioContext || muted) return
   const source = audioContext.createBufferSource()
   source.buffer = buffer
   const gain = audioContext.createGain()
   const pan = audioContext.createPanner()
   gain.gain.value = volume
   pan.setPosition(position.x, position.y, position.z)
-  pan.rolloffFactor = 0.1
+  pan.rolloffFactor = 0.25
   pan.refDistance = 10
   const distance = Math.hypot(
-    audioContext.listener.positionX.value - position.x,
-    audioContext.listener.positionY.value - position.y,
-    audioContext.listener.positionZ.value - position.z
+    listenerPosition.x - position.x,
+    listenerPosition.y - position.y,
+    listenerPosition.z - position.z
   )
   source.connect(gain)
   gain.connect(pan)
@@ -176,10 +185,19 @@ export function playBuffer(buffer: AudioBuffer, volume: number, position: { x: n
   source.start(audioContext.currentTime + distance / speed)
 }
 
+type P = { x: number; y: number; z: number }
+export function setAudioListener({ position, view, up }: { position: P, view: P, up: P }) {
+  if (!audioContext) return
+  listenerPosition.x = position.x
+  listenerPosition.x = position.y
+  listenerPosition.x = position.z
+  audioContext.listener.setPosition(position.x, position.y, position.z)
+  audioContext.listener.setOrientation(view.x, view.y, view.z, up.x, up.y, up.z)
+}
 export function playPyu(x: number, y: number, z: number) {
   playBuffer(sample(pyuSounds)!, 0.01, { x, y, z })
 }
 
 export function playBang(x: number, y: number, z: number) {
-  playBuffer(sample(bangSounds)!, 0.4, { x, y, z })
+  playBuffer(sample(bangSounds)!, 0.5, { x, y, z })
 }
