@@ -1,3 +1,11 @@
+import { sample } from './util'
+
+export const audioContext: AudioContext | undefined = (() => {
+  try {
+    return new window.AudioContext()
+  } catch (e) {}
+})()
+
 export function waveToDataURL(wave: number[] | Float32Array) {
   const time = performance.now()
   const f = (n: number) => '%' + (n >> 4).toString(16) + (n & 0xf).toString(16)
@@ -131,32 +139,41 @@ function createBangSound() {
   return normalizeWave(waveScale(wave, 44100 * 4, i => Math.min(i / 100, Math.exp(-i / 20000))))
 }
 
-const bangSounds = [...new Array(8)].map(() => {
-  const t = new Date()
-  const audio = new Audio()
-  audio.src = waveToDataURL(createBangSound())
-  console.log(new Date().getTime()-t.getTime())
-  return audio
-})
+const bangSounds = [...new Array(8)].map(() => createAudioBufferFloatArray(createBangSound()))
+const pyuSounds = [...new Array(8)].map(() => createAudioBufferFloatArray(createPyuSound()))
 
-const pyuSounds = [...new Array(8)].map(() => {
-  const t = new Date()
-  const audio = new Audio()
-  audio.src = waveToDataURL(createPyuSound())
-  console.log(new Date().getTime()-t.getTime())
-  return audio
-})
-
-export function playBang() {
-  const s = bangSounds.shift()!
-  s.volume = 0.5
-  bangSounds.push(s)
-  s.play()
+function createAudioBufferFloatArray(wave: Float32Array) {
+  if (!audioContext) return
+  const buffer = audioContext.createBuffer(1, wave.length, 44100)
+  const cdata = buffer.getChannelData(0)
+  wave.forEach((w, i) => cdata[i] = w)
+  return buffer
 }
 
-export function playPyu() {
-  const s = pyuSounds.shift()!
-  pyuSounds.push(s)
-  s.volume = 0.02
-  s.play()
+export function initializeAudioContext() {
+  if (audioContext) audioContext.resume()
+}
+
+export function playBang(x: number, y: number, z: number) {
+  playBuffer(sample(bangSounds)!, 1, { x, y, z })
+}
+
+export function playBuffer(buffer: AudioBuffer, volume: number, position: { x: number; y: number; z: number }) {
+  if (!audioContext) return
+  const source = audioContext.createBufferSource()
+  source.buffer = buffer
+  const gain = audioContext.createGain()
+  const pan = audioContext.createPanner()
+  gain.gain.value = volume
+  pan.setPosition(position.x, position.y, position.z)
+  pan.rolloffFactor = 0.1
+  pan.refDistance = 10
+  source.connect(gain)
+  gain.connect(pan)
+  pan.connect(audioContext.destination)
+  source.start()
+}
+
+export function playPyu(x: number, y: number, z: number) {
+  playBuffer(sample(pyuSounds)!, 0.2, { x, y, z })
 }
