@@ -168,10 +168,16 @@ export function playBuffer(buffer: AudioBuffer, volume: number, position: { x: n
   pan.setPosition(position.x, position.y, position.z)
   pan.rolloffFactor = 0.1
   pan.refDistance = 10
+  const distance = Math.hypot(
+    audioContext.listener.positionX.value - position.x,
+    audioContext.listener.positionY.value - position.y,
+    audioContext.listener.positionZ.value - position.z
+  )
   source.connect(gain)
   gain.connect(pan)
   pan.connect(audioContext.destination)
-  source.start()
+  const speed = 334
+  source.start(audioContext.currentTime + distance / speed)
 }
 
 export function playPyu(x: number, y: number, z: number) {
