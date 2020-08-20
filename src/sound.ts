@@ -116,12 +116,12 @@ function wavePickScale(wave: Float32Array, length: number, pick: (i: number) => 
 function normalizeWave(wave: Float32Array) {
   let max = 0
   wave.forEach(v => max = Math.max(max, Math.abs(v)))
-  wave.forEach((v, i) => wave[i] = v / max)
+  wave.forEach((v, i) => wave[i] = v / max))
   return wave
 }
 
 function createPyuSound() {
-  const wave = createPeriodicWave(0.1 + 0.05 * Math.random(), 1800 + 400 * Math.random(), 20000)
+  const wave = createPeriodicWave(0.1 + 0.05 * Math.random(), 1600 + 800 * Math.random(), 20000)
   const length = 44100 * 4
   function pick(i: number) {
     const t = i / length
@@ -136,7 +136,7 @@ function createPyuSound() {
 
 function createBangSound() {
   const wave = createPeriodicWave(20 + 10 * Math.random(), 100 + 100 * Math.random(), 20000)
-  return normalizeWave(waveScale(wave, 44100 * 4, i => Math.min(i / 100, Math.exp(-i / 20000))))
+  return normalizeWave(waveScale(wave, 44100 * 4, i => Math.min(i / 400, Math.exp(-i / 20000))))
 }
 
 const bangSounds = [...new Array(8)].map(() => createAudioBufferFloatArray(createBangSound()))
@@ -152,10 +152,6 @@ function createAudioBufferFloatArray(wave: Float32Array) {
 
 export function initializeAudioContext() {
   if (audioContext) audioContext.resume()
-}
-
-export function playBang(x: number, y: number, z: number) {
-  playBuffer(sample(bangSounds)!, 1, { x, y, z })
 }
 
 export function playBuffer(buffer: AudioBuffer, volume: number, position: { x: number; y: number; z: number }) {
@@ -181,5 +177,9 @@ export function playBuffer(buffer: AudioBuffer, volume: number, position: { x: n
 }
 
 export function playPyu(x: number, y: number, z: number) {
-  playBuffer(sample(pyuSounds)!, 0.2, { x, y, z })
+  playBuffer(sample(pyuSounds)!, 0.01, { x, y, z })
+}
+
+export function playBang(x: number, y: number, z: number) {
+  playBuffer(sample(bangSounds)!, 0.4, { x, y, z })
 }

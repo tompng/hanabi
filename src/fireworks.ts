@@ -189,7 +189,7 @@ export class Fireworks {
         i++
         continue
       }
-      s.f()
+      if (time < s.time + 0.5) s.f()
       this.schedules[i] = this.schedules[this.schedules.length - 1]
       this.schedules.pop()
     }
