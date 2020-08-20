@@ -189,8 +189,8 @@ type P = { x: number; y: number; z: number }
 export function setAudioListener({ position, view, up }: { position: P, view: P, up: P }) {
   if (!audioContext) return
   listenerPosition.x = position.x
-  listenerPosition.x = position.y
-  listenerPosition.x = position.z
+  listenerPosition.y = position.y
+  listenerPosition.z = position.z
   audioContext.listener.setPosition(position.x, position.y, position.z)
   audioContext.listener.setOrientation(view.x, view.y, view.z, up.x, up.y, up.z)
 }
