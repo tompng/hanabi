@@ -32,33 +32,21 @@ export function waveToDataURL(wave: number[] | Float32Array) {
 }
 
 function createPeriodicBang(length: number) {
-  console.log('b')
   const waveData = new Float32Array(length)
   const f = 0.0005
   const ex1 = Math.exp(-1 / 44100 / f)
   const ex2 = ex1 ** 2
   const ex3 = ex1 ** 3
   let s1 = 0, s2 = 0, s3 = 0
-  for(let i = 0; i < length; i++) {
-    const w = waveData[i] = (2 * Math.random() - 1) * Math.exp(-i / 8000)
-    // s1 = s1 * ex1 + w
-    // s2 = s3 * ex2 + w
-    // s3 = s3 * ex3 + w
-  }
-  s1 /= (1 - Math.pow(ex1, length))
-  s2 /= (1 - Math.pow(ex2, length))
-  s3 /= (1 - Math.pow(ex3, length))
   for (let i = 0; i < length; i++) {
-    const w = waveData[i]
+    const w = (2 * Math.random() - 1) * Math.exp(-i / 8000)
     s1 = s1 * ex1 + w
     s2 = s3 * ex2 + w
     s3 = s3 * ex3 + w
-    waveData[i] = s1 - 4 * s2 + 3 * s3//s1 - s2//4 * s2 + 3 * s3
+    waveData[i] = s1 - 4 * s2 + 3 * s3
   }
-  console.log(waveData)
   return waveData
 }
-console.log('a')
 
 function createPeriodicWave(w: number, hz: number, length: number = 44100 * 5) {
   const waveData = new Float32Array(length)
