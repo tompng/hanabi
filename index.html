@@ -1,2 +1,47 @@
-<head><title>Hanabi</title><style>body{background:black;}</style></head>
-<body><script src="dist/index.js"></script></body>
+<head>
+<title>Hanabi</title>
+<style>
+body {
+  background:black;
+}
+.sound {
+  cursor: pointer;
+  width: 12vmin;
+  height: 12vmin;
+  border-top-right-radius: 50%;
+  position: fixed;
+  left: 0;
+  bottom: 0;
+  z-index: 2;
+}
+.sound:hover div{
+  opacity: 0.4;
+}
+.sound:active div{
+  opacity: 0.4;
+  background-color: silver;
+}
+.sound div {
+  position: absolute;
+  opacity: 0.1;
+  left: 2vmin;
+  bottom: 2vmin;
+  width: 8vmin;
+  height: 8vmin;
+  border-radius: 50%;
+  box-sizing: border-box;
+  background-color: white;
+  background-size: 60% 60%;
+  background-repeat: no-repeat;
+  background-position: 55% 50%;
+}
+.sound.sound-on div { background-image: url(images/sound_on.svg); }
+.sound.sound-off div { background-image: url(images/sound_off.svg); }
+</style>
+</head>
+<body>
+  <a class="sound sound-off">
+    <div></div>
+  </a>
+  <script src="dist/index.js"></script>
+</body>

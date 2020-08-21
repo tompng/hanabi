@@ -16,12 +16,12 @@ import { Fireworks } from './fireworks'
 import { Camera } from './camera'
 import { audioContext, setAudioListener, toggleMute, playPyu, playBang } from './sound'
 
-const soundButton = document.createElement('button')
-;(window as any).ac = audioContext
-soundButton.textContent = 'sound'
-soundButton.style.cssText = 'position:fixed;z-index:9999;left:0;top:0;'
-document.body.appendChild(soundButton)
-soundButton.onclick = () => toggleMute()
+const soundButton = document.querySelector<HTMLElement>('.sound')!
+soundButton.onclick = () => {
+  const muted = toggleMute()
+  soundButton.classList.remove('sound-on', 'sound-off')
+  soundButton.classList.add(muted ? 'sound-off' : 'sound-on')
+}
 const land = new Land({min: -1, max: 1, step: 256},{min: -1, max: 1, step: 256},0,(x,y)=>
   (8*(1-x)*(1+x)*(1-y)*(1+y)*(1+Math.sin(8*x+4*y)+Math.sin(2*x-7*y+1)+Math.sin(9*x+11*y+2)+Math.sin(13*x-12*y+3)-6/(1+4*(x**2+y**2))+2*x)-1) / 128
 )
