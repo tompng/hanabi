@@ -1,5 +1,5 @@
 import * as THREE from 'three'
-import { sample, sphereRandom, sphereSurfaceRandom, evenSpherePoints, N3D, peakTime, positionAt, velocityAt } from './util'
+import { sample, sampleN, sphereRandom, sphereSurfaceRandom, evenSpherePoints, N3D, peakTime, positionAt, velocityAt } from './util'
 import {
   ShaderBeeParams,
   ShaderBaseParams,
@@ -143,7 +143,7 @@ const singleDir: N3D[] = [[0, 0, 0]]
 const particleTailParams: ShaderParticleParams = {
   speed: 1,
   friction: 8,
-  duration: 0.8,
+  duration: 0.4,
   durationRandomness: 0.5
 }
 
@@ -166,11 +166,22 @@ function bulletParameters(x: number, y: number, dx: number, dy: number, z: numbe
   return { stopTime, stopPosition, stopVelocity, base }
 }
 
-const color1 = [new THREE.Color('#884'), new THREE.Color('#f84'), new THREE.Color('white')]
-const color2 = new THREE.Color('#a66')
-const color3 = [new THREE.Color('white'), new THREE.Color('#faa')]
+const colors = [
+  [new THREE.Color('#884'), new THREE.Color('#842'), new THREE.Color('444')],
+  new THREE.Color('#844'),
+  [new THREE.Color('#444'), new THREE.Color('#844')]
+]
+const colors2 = [
+  new THREE.Color('#4a4'),
+  new THREE.Color('#44c'),
+  new THREE.Color('#84c'),
+  new THREE.Color('#48c'),
+  new THREE.Color('#4a8'),
+  new THREE.Color('#8a4'),
+]
+
 function randomColor() {
-  return  sample([color1, color2, color3])
+  return sample(colors)
 }
 
 export class Fireworks {
@@ -223,10 +234,8 @@ export class Fireworks {
   }
 }
 
-const direction = evenSpherePoints(3, 0.5)
-
 const stopParams: ShaderStopParams = {
-  time: 1.6
+  time: 2.5
 }
 const beeParams: ShaderBeeParams = {
   start: 0.8,
@@ -239,7 +248,17 @@ const beeParams: ShaderBeeParams = {
 const particleSplashParams: ShaderParticleParams = {
   speed: 4,
   friction: 4,
-  duration: 1.2
+  duration: 1.2,
+  durationRandomness: 1
+}
+
+const baseParamsWithoutPosition = {
+  speed: 20,
+  friction: 1,
+  duration: 2.5,
+  speedRandomness: 0.1,
+  frictionRandomness: 0.4,
+  burnRateRandomness: 0.4
 }
 
 export function addHanabi(fireworks: Fireworks, sound: Record<'bang' | 'pyu', (...p: N3D) => void>, time: number) {
@@ -252,32 +271,73 @@ export function addHanabi(fireworks: Fireworks, sound: Record<'bang' | 'pyu', (.
     duration: 100
   }
   const pt = peakTime(60, 0.5) * (1 - 0.1 * Math.random())
-  const stop = starStops(singleDir, singleAttr, bulletBaseParams, null, pt)[0]
+  const bstop = starStops(singleDir, singleAttr, bulletBaseParams, null, pt)[0]
 
   const bullet = new ParticleTailStar(singleDir, 256, { base: bulletBaseParams, stop: { time: pt }, particle: particleTailParams, color: new THREE.Color(0.02,0.02,0.02), size: 0.1 })
   fireworks.add({ star: bullet, startTime: time })
-  if (Math.random() < 0.2) sound.pyu(...stop.p)
-  fireworks.schedule(time + pt, () => sound.bang(...stop.p))
-
-  const baseParams: ShaderBaseParams = {
-    center: new THREE.Vector3(...stop.p),
-    baseVelocity: new THREE.Vector3(...stop.v),
-    speed: 20,
-    friction: 1,
-    duration: 4.0,
-    speedRandomness: 0.1,
-    frictionRandomness: 0.4,
-    burnRateRandomness: 0.4
+  if (Math.random() < 0.2) sound.pyu(...bstop.p)
+  fireworks.schedule(time + pt, () => sound.bang(...bstop.p))
+  if (Math.random() < 0.5) {
+    addTypeD(fireworks, time + pt, bstop.p, bstop.v)
+  } else {
+    addType1(fireworks, time + pt, bstop.p, bstop.v)
   }
+}
 
-  const cstar = new CurveStar(direction, { base: baseParams, bee: beeParams, stop: stopParams, widthStart: 0.5, color: color1, widthEnd: 0.1, curveFriction: particleTailParams.friction, curveDelay: 0.4 })
-  const pstar = new PointStar(direction, { base: baseParams, bee: beeParams, stop: stopParams, color: color1, size: 0.4 })
-  const pstar2 = new PointStar(direction, { base: { ...baseParams, friction: 1, burnRateRandomness: 0.1, speedRandomness: 0, frictionRandomness: 0, speed: 30, duration: 2 }, color: color3, lastFlash: { duration: 0.6, color: new THREE.Color('white'), size: 0.2 }, size: 0.4 })
-  const tstar = new ParticleTailStar(direction, 64, { base: baseParams, bee: beeParams, stop: stopParams, particle: particleTailParams, size: 0.2, color: color2 })
-  const sstar = new ParticleSplashStar(direction, 64, { base: baseParams, bee: beeParams, stop: stopParams, particle: particleSplashParams, size: 0.12, color: color3 })
-  fireworks.add({ star: cstar, startTime: time + pt })
-  fireworks.add({ star: pstar, startTime: time + pt })
-  fireworks.add({ star: pstar2, startTime: time + pt })
-  fireworks.add({ star: tstar, startTime: time + pt })
-  fireworks.add({ star: sstar, startTime: time + pt })
+function addType1(fireworks: Fireworks, time: number, position: N3D, velocity: N3D) {
+  const bee = Math.random() < 0.2 ? beeParams : { ...beeParams, start: 2, speed: 8 * Math.random(), decayRandomness: 1, speedRandomness: 1 }
+  const direction = sphericalDirections[sample([6, 7])]
+  const baseParams: ShaderBaseParams = {
+    ...baseParamsWithoutPosition,
+    center: new THREE.Vector3(...position),
+    baseVelocity: new THREE.Vector3(...velocity),
+  }
+  const blink: ShaderBlinkParams | undefined = Math.random() < 0.5 ? { start: 1 + 0.5 * Math.random(), rate: 0.1, rateRandomness: 0.2 } : undefined
+  const stop = Math.random() < 0.2 ? stopParams : undefined
+  const cstar = new CurveStar(direction, { base: baseParams, bee, stop, widthStart: 0.2, color: randomColor(), widthEnd: 0.1, curveFriction: particleTailParams.friction, curveDelay: 0.2 })
+  const pstar = new PointStar(direction, { base: baseParams, bee, stop, blink, color: randomColor(), size: 0.4 })
+  const tstar = new ParticleTailStar(direction, 32, { base: baseParams, bee, stop, particle: particleTailParams, size: 0.2, color: randomColor() })
+  fireworks.add({ star: cstar, startTime: time })
+  fireworks.add({ star: pstar, startTime: time })
+  fireworks.add({ star: tstar, startTime: time })
+  if (stop) {
+    const sstar = new ParticleSplashStar(direction, 32, { base: baseParams, bee, stop, particle: particleSplashParams, size: 0.12, color: randomColor() })
+    fireworks.add({ star: sstar, startTime: time })
+  }
+}
+
+function randomRotation() {
+  const [x, y, z] = sphereSurfaceRandom()
+  const th1 = 2 * Math.PI * Math.random()
+  const cos1 = Math.cos(th1), sin1 = Math.sin(th1)
+  const m1 = new THREE.Matrix3()
+  m1.set(cos1, sin1, 0, -sin1, cos1, 0, 0, 0, 1)
+  const th2 = Math.PI / 2 + Math.asin(z)
+  const cos2 = Math.cos(th2), sin2 = Math.sin(th2)
+  const m2 = new THREE.Matrix3()
+  m2.set(cos2, 0, sin2, 0, 1, 0, -sin2, 0, cos2)
+  const th3 = 2 * Math.PI * Math.random()
+  const cos3 = Math.cos(th3), sin3 = Math.sin(th3)
+  const m3 = new THREE.Matrix3()
+  m3.set(cos3, sin3, 0, -sin3, cos3, 0, 0, 0, 1)
+  return m1.multiply(m2).multiply(m3)
+}
+
+function addTypeD(fireworks: Fireworks, time: number, position: N3D, velocity: N3D) {
+  const direction = sphericalDirections[sample([7, 8])]
+  const baseParams: ShaderBaseParams = {
+    ...baseParamsWithoutPosition,
+    center: new THREE.Vector3(...position),
+    speed: 10,
+    speedRandomness: 0.05,
+    duration: 1.7,
+    baseVelocity: new THREE.Vector3(...velocity),
+  }
+  const blink: ShaderBlinkParams | undefined = Math.random() < 0.5 ? { start: 1, rate: 0.1, rateRandomness: 0.2 } : undefined
+  const blink2: ShaderBlinkParams | undefined = Math.random() < 0.25 ? { start: 1, rate: 0.1, rateRandomness: 0.2 } : undefined
+  const lastFlash = Math.random() < 0.5 ? { duration: 0.1, color: new THREE.Color('white'), size: 0 } : undefined
+  fireworks.add({ startTime: time, star: new PointStar(direction, { base: { ...baseParams, duration: blink ? 1.5 : 1 }, color: randomColor(), size: 0.3, blink, lastFlash }) })
+  if (Math.random() < 0.5) fireworks.add({ startTime: time, star: new PointStar(direction, { base: { ...baseParams, duration: blink ? 1.5 : 1, speed: 8, rotation: randomRotation() }, color: randomColor(), size: 0.3, blink, lastFlash }) })
+  fireworks.add({ startTime: time, star: new ParticleTailStar(sample(diskDirections), 32, { base: { ...baseParams, speed: 17, rotation: randomRotation() }, particle: particleTailParams, color: randomColor(), blink: blink2, size: 0.1 }) })
+  if (Math.random() < 0.5) fireworks.add({ startTime: time, star: new ParticleTailStar(sample(diskDirections), 32, { base: { ...baseParams, speed: 20, rotation: randomRotation() }, particle: particleTailParams, color: randomColor(), blink: blink2, size: 0.1 }) })
 }

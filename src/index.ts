@@ -222,8 +222,8 @@ function animate() {
 
   camera.update()
   setAudioListener(camera.listenerPosition())
-  if (Math.floor(timeWas / 0.2) !== Math.floor(time / 0.2)) {
-    if (Math.random() < 0.1) addHanabi(fireworks, { bang: playBang, pyu: playPyu }, time)
+  if (Math.floor(timeWas / 0.1) !== Math.floor(time / 0.1)) {
+    if (Math.random() < 0.04) addHanabi(fireworks, { bang: playBang, pyu: playPyu }, time)
   }
   timeWas = time
 
