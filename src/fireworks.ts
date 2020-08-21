@@ -1,5 +1,5 @@
 import * as THREE from 'three'
-import { sample, sampleN, sphereRandom, sphereSurfaceRandom, evenSpherePoints, N3D, peakTime, positionAt, velocityAt } from './util'
+import { sphereRandom, evenSpherePoints, N3D, peakTime, positionAt, velocityAt } from './util'
 import {
   ShaderBeeParams,
   ShaderBaseParams,
@@ -21,6 +21,15 @@ import {
 } from './polyhedrons'
 
 type Direction = N3D[]
+
+let randomSeed = 0
+function random() {
+  randomSeed = (randomSeed * 3331 + 331) % 333331
+  return randomSeed % 1000 / 1000
+}
+function sample<T>(arr: T[]) {
+  return arr[Math.floor(random() * arr.length)]
+}
 
 function circularDirection(n: number): Direction {
   const dirs: Direction = []
@@ -270,25 +279,26 @@ const baseParamsWithoutPosition = {
   burnRateRandomness: 0.4
 }
 
-export function addHanabi(fireworks: Fireworks, sound: Record<'bang' | 'pyu', (...p: N3D) => void>, time: number) {
-  const rndpos = () => 20 * (Math.floor(Math.random() * 3) - 1)
+export function addHanabi(fireworks: Fireworks, sound: Record<'bang' | 'pyu', (...p: N3D) => void>, time: number, seed: number) {
+  randomSeed = (seed * 3331) % 333331
+  const rndpos = () => 20 * (Math.floor(random() * 3) - 1)
   const bulletBaseParams: ShaderBaseParams = {
     center: new THREE.Vector3(rndpos(), rndpos(), 0),
-    baseVelocity: new THREE.Vector3(16 * Math.random() - 8, 16 * Math.random() - 8, 50 + 20 * Math.random()),
+    baseVelocity: new THREE.Vector3(16 * random() - 8, 16 * random() - 8, 50 + 20 * random()),
     speed: 0,
     friction: 0.5,
     duration: 100
   }
-  const pt = peakTime(60, 0.5) * (1 - 0.1 * Math.random())
+  const pt = peakTime(60, 0.5) * (1 - 0.1 * random())
   const bstop = starStops(singleDir, singleAttr, bulletBaseParams, null, pt)[0]
 
   const bullet = new ParticleTailStar(singleDir, 256, { base: bulletBaseParams, stop: { time: pt }, particle: particleTailParams, color: new THREE.Color(0.02,0.02,0.02), size: 0.1 })
   fireworks.add({ star: bullet, startTime: time })
-  if (Math.random() < 0.2) sound.pyu(...bstop.p)
+  if (random() < 0.2) sound.pyu(...bstop.p)
   fireworks.schedule(time + pt, () => sound.bang(...bstop.p))
-  if (Math.random() < 0.1) {
+  if (random() < 0.1) {
     addTypeSub(fireworks, time + pt, bstop.p, bstop.v)
-  } else if (Math.random() < 0.2) {
+  } else if (random() < 0.2) {
     addTypeD(fireworks, time + pt, bstop.p, bstop.v)
   } else {
     addType1(fireworks, time + pt, bstop.p, bstop.v)
@@ -296,8 +306,8 @@ export function addHanabi(fireworks: Fireworks, sound: Record<'bang' | 'pyu', (.
 }
 
 function addType1(fireworks: Fireworks, time: number, position: N3D, velocity: N3D) {
-  const bee = Math.random() < 0.2 ? beeParams : { ...beeParams, start: 2, speed: 8 * Math.random(), decayRandomness: 1, speedRandomness: 1 }
-  const rotation = Math.random() < 0.2 ? randomRotation() : undefined
+  const bee = random() < 0.2 ? beeParams : { ...beeParams, start: 2, speed: 8 * random(), decayRandomness: 1, speedRandomness: 1 }
+  const rotation = random() < 0.2 ? randomRotation() : undefined
   const direction = rotation ? sample(clusterDirections2) : sphericalDirections[sample([6, 7])]
   const baseParams: ShaderBaseParams = {
     ...baseParamsWithoutPosition,
@@ -305,8 +315,8 @@ function addType1(fireworks: Fireworks, time: number, position: N3D, velocity: N
     baseVelocity: new THREE.Vector3(...velocity),
     rotation
   }
-  const blink: ShaderBlinkParams | undefined = Math.random() < 0.5 ? { start: 1 + 0.5 * Math.random(), rate: 0.1, rateRandomness: 0.2 } : undefined
-  const stop = Math.random() < 0.2 ? stopParams : undefined
+  const blink: ShaderBlinkParams | undefined = random() < 0.5 ? { start: 1 + 0.5 * random(), rate: 0.1, rateRandomness: 0.2 } : undefined
+  const stop = random() < 0.2 ? stopParams : undefined
   const cstar = new CurveStar(direction, { base: baseParams, bee, stop, widthStart: 0.2, color: randomColor(), widthEnd: 0.1, curveFriction: particleTailParams.friction, curveDelay: 0.2 })
   const pstar = new PointStar(direction, { base: baseParams, bee, stop, blink, color: randomColor(), size: 0.4 })
   const tstar = new ParticleTailStar(direction, 32, { base: baseParams, bee, stop, particle: particleTailParams, size: 0.2, color: randomColor() })
@@ -320,15 +330,15 @@ function addType1(fireworks: Fireworks, time: number, position: N3D, velocity: N
 }
 
 function randomRotation() {
-  const th1 = 2 * Math.PI * Math.random()
+  const th1 = 2 * Math.PI * random()
   const cos1 = Math.cos(th1), sin1 = Math.sin(th1)
   const m1 = new THREE.Matrix3()
   m1.set(cos1, sin1, 0, -sin1, cos1, 0, 0, 0, 1)
-  const th2 = Math.PI / 2 + Math.asin(2 * Math.random() - 1)
+  const th2 = Math.PI / 2 + Math.asin(2 * random() - 1)
   const cos2 = Math.cos(th2), sin2 = Math.sin(th2)
   const m2 = new THREE.Matrix3()
   m2.set(cos2, 0, sin2, 0, 1, 0, -sin2, 0, cos2)
-  const th3 = 2 * Math.PI * Math.random()
+  const th3 = 2 * Math.PI * random()
   const cos3 = Math.cos(th3), sin3 = Math.sin(th3)
   const m3 = new THREE.Matrix3()
   m3.set(cos3, sin3, 0, -sin3, cos3, 0, 0, 0, 1)
@@ -345,13 +355,13 @@ function addTypeD(fireworks: Fireworks, time: number, position: N3D, velocity: N
     duration: 1.7,
     baseVelocity: new THREE.Vector3(...velocity),
   }
-  const blink: ShaderBlinkParams | undefined = Math.random() < 0.5 ? { start: 1, rate: 0.1, rateRandomness: 0.2 } : undefined
-  const blink2: ShaderBlinkParams | undefined = Math.random() < 0.25 ? { start: 1, rate: 0.1, rateRandomness: 0.2 } : undefined
-  const lastFlash = Math.random() < 0.5 ? { duration: 0.1, color: new THREE.Color('white'), size: 0 } : undefined
+  const blink: ShaderBlinkParams | undefined = random() < 0.5 ? { start: 1, rate: 0.1, rateRandomness: 0.2 } : undefined
+  const blink2: ShaderBlinkParams | undefined = random() < 0.25 ? { start: 1, rate: 0.1, rateRandomness: 0.2 } : undefined
+  const lastFlash = random() < 0.5 ? { duration: 0.1, color: new THREE.Color('white'), size: 0 } : undefined
   fireworks.add({ startTime: time, star: new PointStar(direction, { base: { ...baseParams, duration: blink ? 1.5 : 1 }, color: randomColor(), size: 0.3, blink, lastFlash }) })
-  if (Math.random() < 0.5) fireworks.add({ startTime: time, star: new PointStar(direction, { base: { ...baseParams, duration: blink ? 1.5 : 1, speed: 8, rotation: randomRotation() }, color: randomColor(), size: 0.3, blink, lastFlash }) })
+  if (random() < 0.5) fireworks.add({ startTime: time, star: new PointStar(direction, { base: { ...baseParams, duration: blink ? 1.5 : 1, speed: 8, rotation: randomRotation() }, color: randomColor(), size: 0.3, blink, lastFlash }) })
   fireworks.add({ startTime: time, star: new ParticleTailStar(sample(diskDirections), 32, { base: { ...baseParams, speed: 17, rotation: randomRotation() }, particle: particleTailParams, color: randomColor(), blink: blink2, size: 0.1 }) })
-  if (Math.random() < 0.5) fireworks.add({ startTime: time, star: new ParticleTailStar(sample(diskDirections), 32, { base: { ...baseParams, speed: 20, rotation: randomRotation() }, particle: particleTailParams, color: randomColor(), blink: blink2, size: 0.1 }) })
+  if (random() < 0.5) fireworks.add({ startTime: time, star: new ParticleTailStar(sample(diskDirections), 32, { base: { ...baseParams, speed: 20, rotation: randomRotation() }, particle: particleTailParams, color: randomColor(), blink: blink2, size: 0.1 }) })
 }
 
 function addTypeSub(fireworks: Fireworks, time: number, position: N3D, velocity: N3D) {
@@ -367,11 +377,11 @@ function addTypeSub(fireworks: Fireworks, time: number, position: N3D, velocity:
     burnRateRandomness: 1,
     baseVelocity: new THREE.Vector3(...velocity),
   }
-  const stopTime = 0.5 + 0.2 * Math.random()
+  const stopTime = 0.5 + 0.2 * random()
   fireworks.add({ startTime: time, star: new PointStar(direction, { base: baseParams, stop: { time: stopTime }, color: new THREE.Color('#050505'), size: 0.2 })})
   const stops = starStops(direction, attributes, baseParams, null, stopTime)
   const color1 = randomColor()
-  const color2 = Math.random() < 0.5 ? color1 : randomColor()
+  const color2 = random() < 0.5 ? color1 : randomColor()
   const base = {
     ...baseParamsWithoutPosition,
     speed: 8,

@@ -3,21 +3,16 @@ import hanabiUtilChunk from './shaders/util.vert'
 import baseParamsChunk from './shaders/base_params.vert'
 import blinkParamsChunk from './shaders/blink_params.vert'
 import blinkParticleChunk from './shaders/particle_params.vert'
-import { CurveStar } from './CurveStar'
-import { PointStar } from './PointStar'
-import { ParticleTailStar, ParticleSplashStar } from './ParticleStar'
-import { N3D, evenSpherePoints, peakTime } from './util'
-import { generateStarBaseAttributes, ShaderBaseParams, ShaderStopParams, ShaderBeeParams, ShaderParticleParams, starStops } from './attributes'
 import { Capturer } from './capture'
 import { Land } from './Land'
 import { Water } from './Water'
 import { skyMesh } from './sky'
 import { Fireworks, addHanabi } from './fireworks'
 import { Camera } from './camera'
-import { audioContext, setAudioListener, toggleMute, playPyu, playBang } from './sound'
+import { setAudioListener, toggleMute, playPyu, playBang } from './sound'
 
 const soundButton = document.querySelector<HTMLElement>('.sound')!
-soundButton.onclick = () => {
+soundButton.onpointerdown = () => {
   const muted = toggleMute()
   soundButton.classList.remove('sound-on', 'sound-off')
   soundButton.classList.add(muted ? 'sound-off' : 'sound-on')
@@ -90,7 +85,7 @@ const cameraR = 80
 camera.position.x = -cameraR
 camera.position.z = 1
 camera.verticalAngle = 0.2
-const move = { from: { x: camera.position.x, y: camera.position.y }, to: { x: camera.position.x, y: camera.position.y }, time: 0 }
+const move = { from: { x: camera.position.x, y: camera.position.y }, to: { x: camera.position.x, y: camera.position.y }, time: new Date() }
 const lscale = 256
 let currentPointerId: null | number = null
 renderer.domElement.addEventListener('pointerdown', e => {
@@ -101,7 +96,7 @@ renderer.domElement.addEventListener('pointerdown', e => {
   const startHAngle = camera.horizontalAngle
   const startVAngle = camera.verticalAngle
   let maxMove = 0
-  const time = performance.now()
+  const time = new Date()
   function pointermove(e: PointerEvent) {
     e.preventDefault()
     if (e.pointerId !== currentPointerId) return
@@ -117,7 +112,7 @@ renderer.domElement.addEventListener('pointerdown', e => {
     window.removeEventListener('pointermove', pointermove)
     window.removeEventListener('pointerup', pointerup)
     if (e.pointerId !== currentPointerId) return
-    if (maxMove >= 4 || performance.now() - time > 500) return
+    if (maxMove >= 4 || new Date().getTime() - time.getTime() > 500) return
     const el = renderer.domElement
     const rx = (e.pageX - el.offsetLeft) / el.offsetWidth
     const ry = (e.pageY - el.offsetTop) / el.offsetHeight
@@ -141,7 +136,7 @@ renderer.domElement.addEventListener('pointerdown', e => {
         y: Math.min(Math.max(-lscale, camera.position.y + l * dy), lscale)
       }
       move.from = { x: camera.position.x, y: camera.position.y }
-      move.time = performance.now() / 1000
+      move.time = new Date()
     }
   }
   window.addEventListener('pointermove', pointermove)
@@ -211,10 +206,10 @@ button.onclick = () => {
   }, 100)
 }
 
-let timeWas = performance.now() / 1000
+let timeWas = new Date().getTime() / 1000
 function animate() {
-  const time = performance.now() / 1000
-  let mt = Math.min(Math.max(0, (time - move.time) / 2), 1)
+  const time = new Date().getTime() / 1000
+  let mt = Math.min(Math.max(0, (time - move.time.getTime() / 1000) / 2), 1)
   mt = mt * mt * (3 - 2 * mt)
   camera.position.x = move.from.x * (1 - mt) + mt * move.to.x
   camera.position.y = move.from.y * (1 - mt) + mt * move.to.y
@@ -223,7 +218,8 @@ function animate() {
   camera.update()
   setAudioListener(camera.listenerPosition())
   if (Math.floor(timeWas / 0.1) !== Math.floor(time / 0.1)) {
-    if (Math.random() < 0.04) addHanabi(fireworks, { bang: playBang, pyu: playPyu }, time)
+    const seed = Math.floor(time / 0.1)
+    if (((seed * 3331 + Math.floor(seed / 123) * 331) % 100) < 4) addHanabi(fireworks, { bang: playBang, pyu: playPyu }, time, seed)
   }
   timeWas = time
 
