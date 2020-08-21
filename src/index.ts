@@ -229,7 +229,7 @@ function animate() {
   landUniforms.color.value = new THREE.Color(brightness.r * ll, brightness.g * ll, brightness.b * ll)
 
   function render() {
-    water.update(time)
+    water.update(time % 100000)
     const target = renderer.getRenderTarget()
     renderer.setRenderTarget(water.skyTarget)
     renderer.clearColor()
