@@ -34,7 +34,7 @@ export class CurveStar {
     }
     this.time = uniforms.time
     this.material = new THREE.ShaderMaterial({
-      defines: { BEE: !!bee, STOP: !!stop, COLORS: Array.isArray(color) && color.length },
+      defines: { BEE: !!bee, STOP: !!stop, COLORS: Array.isArray(color) && color.length, ROTATION: !!base.rotation },
       uniforms: uniforms as any,
       vertexShader: vertexShader,
       fragmentShader: fragmentShader,

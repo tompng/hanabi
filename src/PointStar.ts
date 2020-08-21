@@ -33,7 +33,7 @@ export class PointStar {
     const uniforms = { ...buildUniforms({ base, color, lastFlash, stop, bee, blink }), size: { value: size }, pointPixels: this.pointPixels }
     this.time = uniforms.time
     this.material = new THREE.ShaderMaterial({
-      defines: { BLINK: !!blink, BEE: !!bee, STOP: !!stop, COLORS: Array.isArray(color) && color.length, LAST_FLASH: !!lastFlash },
+      defines: { BLINK: !!blink, BEE: !!bee, STOP: !!stop, COLORS: Array.isArray(color) && color.length, LAST_FLASH: !!lastFlash, ROTATION: !!base.rotation },
       uniforms: uniforms as any,
       vertexShader: vertexShader,
       fragmentShader: fragmentShader,

@@ -31,7 +31,7 @@ export class ParticleTailStar {
     const uniforms = { ...buildUniforms({ base, color, bee, blink, stop, particle }), size: { value: size }, pointPixels: this.pointPixels }
     this.time = uniforms.time
     this.material = new THREE.ShaderMaterial({
-      defines: { BLINK: !!blink, BEE: !!bee, STOP: !!stop, COLORS: Array.isArray(color) && color.length },
+      defines: { BLINK: !!blink, BEE: !!bee, STOP: !!stop, COLORS: Array.isArray(color) && color.length, ROTATION: !!base.rotation },
       uniforms: uniforms as any,
       vertexShader: tailVertexShader,
       fragmentShader,
@@ -98,7 +98,7 @@ export class ParticleSplashStar {
     const uniforms = {... buildUniforms({ base, color, bee, blink, stop, particle }), size: { value: size }, pointPixels: this.pointPixels }
     this.time = uniforms.time
     this.material = new THREE.ShaderMaterial({
-      defines: { BLINK: !!blink, BEE: !!bee, STOP: true, COLORS: Array.isArray(color) && color.length },
+      defines: { BLINK: !!blink, BEE: !!bee, STOP: true, COLORS: Array.isArray(color) && color.length, ROTATION: !!base.rotation },
       uniforms: uniforms as any,
       vertexShader: splashVertexShader,
       fragmentShader,

@@ -71,7 +71,7 @@ export function buildUniforms({ base, color, stop, blink, bee, particle, lastFla
     particleFrictionRandomness: { value: particle.frictionRandomness ?? 0 },
     particleDurationRandomness: { value: particle.durationRandomness ?? 0 },
   } : {}
-  const rotationUniforms = base.rotation ? { value: base.rotation } : {}
+  const rotationUniforms = base.rotation ? { rotationMatrix: { value: base.rotation } } : {}
   const colorUniforms: Record<string, { value: THREE.Color }> = {}
   if (Array.isArray(color)) {
     color.forEach((value, index) => {

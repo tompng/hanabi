@@ -8,17 +8,16 @@ varying float brightness;
 varying vec3 color;
 #endif
 
-
 void main() {
   float burnRate = 1.0 + burnRateRandom * burnRateRandomness;
-  if (time > duration * burnRate) return;
+  float rate = particleDuration * (1.0 + particleDurationRandom * particleDurationRandomness);
+  if (time > duration * burnRate + rate) return;
   vec3 v0 = speed * direction * (1.0 + speedRandom * speedRandomness);
   #ifdef ROTATION
     v0 = rotationMatrix * v0;
   #endif
   v0 += baseVelocity;
   float friction2 = friction * (1.0 + frictionRandom * frictionRandomness);
-  float rate = particleDuration * (1.0 + particleDurationRandom * particleDurationRandomness);
   float t2 = time + particlePhase * rate;
   float t = rate * floor(t2 / rate) - particlePhase * rate;
   t2 = time - t;
