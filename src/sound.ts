@@ -31,6 +31,35 @@ export function waveToDataURL(wave: number[] | Float32Array) {
   ].join('')
 }
 
+function createPeriodicBang(length: number) {
+  console.log('b')
+  const waveData = new Float32Array(length)
+  const f = 0.0005
+  const ex1 = Math.exp(-1 / 44100 / f)
+  const ex2 = ex1 ** 2
+  const ex3 = ex1 ** 3
+  let s1 = 0, s2 = 0, s3 = 0
+  for(let i = 0; i < length; i++) {
+    const w = waveData[i] = (2 * Math.random() - 1) * Math.exp(-i / 8000)
+    // s1 = s1 * ex1 + w
+    // s2 = s3 * ex2 + w
+    // s3 = s3 * ex3 + w
+  }
+  s1 /= (1 - Math.pow(ex1, length))
+  s2 /= (1 - Math.pow(ex2, length))
+  s3 /= (1 - Math.pow(ex3, length))
+  for (let i = 0; i < length; i++) {
+    const w = waveData[i]
+    s1 = s1 * ex1 + w
+    s2 = s3 * ex2 + w
+    s3 = s3 * ex3 + w
+    waveData[i] = s1 - 4 * s2 + 3 * s3//s1 - s2//4 * s2 + 3 * s3
+  }
+  console.log(waveData)
+  return waveData
+}
+console.log('a')
+
 function createPeriodicWave(w: number, hz: number, length: number = 44100 * 5) {
   const waveData = new Float32Array(length)
   const th = 2 * Math.PI * hz / 44100
@@ -121,7 +150,7 @@ function normalizeWave(wave: Float32Array) {
 }
 
 function createPyuSound() {
-  const wave = createPeriodicWave(0.1 + 0.05 * Math.random(), 1600 + 800 * Math.random(), 20000)
+  const wave = createPeriodicWave(0.1 + 0.05 * Math.random(), 3000, 20000)
   const length = 44100 * 4
   function pick(i: number) {
     const t = i / length
@@ -135,12 +164,14 @@ function createPyuSound() {
 }
 
 function createBangSound() {
-  const wave = createPeriodicWave(20 + 10 * Math.random(), 100 + 100 * Math.random(), 20000)
-  return normalizeWave(waveScale(wave, 44100 * 5, i => Math.min(i / 400, Math.exp(-i / 24000))))
+  const wave = createPeriodicBang(44100 * 3)
+  const a = normalizeWave(waveScale(wave, 44100 * 3, i => Math.min(Math.exp(-i / 10000))))
+  const b = normalizeWave(wavePickScale(wave, 44100 * 3, i => i / 8, i => Math.min(i / 8000, Math.exp(-i / 20000))))
+  return a.map((v, i) => v + b[i])
 }
 
-const bangSounds = [...new Array(8)].map(() => createAudioBufferFloatArray(createBangSound()))
-const pyuSounds = [...new Array(8)].map(() => createAudioBufferFloatArray(createPyuSound()))
+const bangSounds = [...new Array(4)].map(() => createAudioBufferFloatArray(createBangSound()))
+const pyuSounds = [...new Array(2)].map(() => createAudioBufferFloatArray(createPyuSound()))
 
 function createAudioBufferFloatArray(wave: Float32Array) {
   if (!audioContext) return
@@ -163,7 +194,7 @@ export function toggleMute(flag?: boolean) {
   return muted
 }
 
-export function playBuffer(buffer: AudioBuffer, volume: number, position: { x: number; y: number; z: number }) {
+export function playBuffer(buffer: AudioBuffer, volume: number, position: { x: number; y: number; z: number }, rateRandomness: number) {
   if (!audioContext || muted) return
   const source = audioContext.createBufferSource()
   source.buffer = buffer
@@ -179,6 +210,7 @@ export function playBuffer(buffer: AudioBuffer, volume: number, position: { x: n
     listenerPosition.z - position.z
   )
   source.connect(gain)
+  source.playbackRate.value = 1 + rateRandomness * (2 * Math.random() - 1)
   gain.connect(pan)
   pan.connect(audioContext.destination)
   const speed = 334
@@ -195,9 +227,9 @@ export function setAudioListener({ position, view, up }: { position: P, view: P,
   audioContext.listener.setOrientation(view.x, view.y, view.z, up.x, up.y, up.z)
 }
 export function playPyu(x: number, y: number, z: number) {
-  playBuffer(sample(pyuSounds)!, 0.01, { x, y, z })
+  playBuffer(sample(pyuSounds)!, 0.01, { x, y, z }, 0.1)
 }
 
 export function playBang(x: number, y: number, z: number) {
-  playBuffer(sample(bangSounds)!, 0.5, { x, y, z })
+  playBuffer(sample(bangSounds)!, 0.5, { x, y, z }, 0.2)
 }
