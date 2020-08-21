@@ -3,10 +3,15 @@ import { sample, sphereRandom, sphereSurfaceRandom, evenSpherePoints, N3D, peakT
 import {
   ShaderBeeParams,
   ShaderBaseParams,
+  ShaderStopParams,
+  ShaderBlinkParams,
   ShaderParticleParams,
-  generateStarBaseAttributes
+  generateStarBaseAttributes,
+  starStops
 } from './attributes'
-
+import { ParticleTailStar, ParticleSplashStar } from './ParticleStar'
+import { CurveStar } from './CurveStar'
+import { PointStar } from './PointStar'
 import {
   polyhedron4,
   polyhedron6,
@@ -137,7 +142,7 @@ const singleDir: N3D[] = [[0, 0, 0]]
 
 const particleTailParams: ShaderParticleParams = {
   speed: 1,
-  friction: 16,
+  friction: 8,
   duration: 0.8,
   durationRandomness: 0.5
 }
@@ -216,4 +221,63 @@ export class Fireworks {
     })
     return color
   }
+}
+
+const direction = evenSpherePoints(3, 0.5)
+
+const stopParams: ShaderStopParams = {
+  time: 1.6
+}
+const beeParams: ShaderBeeParams = {
+  start: 0.8,
+  decay: 4.0,
+  speed: 32.0,
+  decayRandomness: 0.2,
+  speedRandomness: 0.2
+}
+
+const particleSplashParams: ShaderParticleParams = {
+  speed: 4,
+  friction: 4,
+  duration: 1.2
+}
+
+export function addHanabi(fireworks: Fireworks, sound: Record<'bang' | 'pyu', (...p: N3D) => void>, time: number) {
+  const rndpos = () => 20 * (Math.floor(Math.random() * 3) - 1)
+  const bulletBaseParams: ShaderBaseParams = {
+    center: new THREE.Vector3(rndpos(), rndpos(), 0),
+    baseVelocity: new THREE.Vector3(16 * Math.random() - 8, 16 * Math.random() - 8, 50 + 20 * Math.random()),
+    speed: 0,
+    friction: 0.5,
+    duration: 100
+  }
+  const pt = peakTime(60, 0.5) * (1 - 0.1 * Math.random())
+  const stop = starStops(singleDir, singleAttr, bulletBaseParams, null, pt)[0]
+
+  const bullet = new ParticleTailStar(singleDir, 256, { base: bulletBaseParams, stop: { time: pt }, particle: particleTailParams, color: new THREE.Color(0.02,0.02,0.02), size: 0.1 })
+  fireworks.add({ star: bullet, startTime: time })
+  if (Math.random() < 0.2) sound.pyu(...stop.p)
+  fireworks.schedule(time + pt, () => sound.bang(...stop.p))
+
+  const baseParams: ShaderBaseParams = {
+    center: new THREE.Vector3(...stop.p),
+    baseVelocity: new THREE.Vector3(...stop.v),
+    speed: 20,
+    friction: 1,
+    duration: 4.0,
+    speedRandomness: 0.1,
+    frictionRandomness: 0.4,
+    burnRateRandomness: 0.4
+  }
+
+  const cstar = new CurveStar(direction, { base: baseParams, bee: beeParams, stop: stopParams, widthStart: 0.5, color: color1, widthEnd: 0.1, curveFriction: particleTailParams.friction, curveDelay: 0.4 })
+  const pstar = new PointStar(direction, { base: baseParams, bee: beeParams, stop: stopParams, color: color1, size: 0.4 })
+  const pstar2 = new PointStar(direction, { base: { ...baseParams, friction: 1, burnRateRandomness: 0.1, speedRandomness: 0, frictionRandomness: 0, speed: 30, duration: 2 }, color: color3, lastFlash: { duration: 0.6, color: new THREE.Color('white'), size: 0.2 }, size: 0.4 })
+  const tstar = new ParticleTailStar(direction, 64, { base: baseParams, bee: beeParams, stop: stopParams, particle: particleTailParams, size: 0.2, color: color2 })
+  const sstar = new ParticleSplashStar(direction, 64, { base: baseParams, bee: beeParams, stop: stopParams, particle: particleSplashParams, size: 0.12, color: color3 })
+  fireworks.add({ star: cstar, startTime: time + pt })
+  fireworks.add({ star: pstar, startTime: time + pt })
+  fireworks.add({ star: pstar2, startTime: time + pt })
+  fireworks.add({ star: tstar, startTime: time + pt })
+  fireworks.add({ star: sstar, startTime: time + pt })
 }
