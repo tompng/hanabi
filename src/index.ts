@@ -264,7 +264,7 @@ const singleDir: N3D[] = [[0, 0, 0]]
 
 const particleTailParams: ShaderParticleParams = {
   speed: 1,
-  friction: 16,
+  friction: 8,
   duration: 0.8,
   durationRandomness: 0.5
 }
@@ -283,9 +283,9 @@ const beeParams: ShaderBeeParams = {
 }
 
 const particleSplashParams: ShaderParticleParams = {
-  speed: 12,
-  friction: 8,
-  duration: 0.8
+  speed: 4,
+  friction: 4,
+  duration: 1.2
 }
 const color1 = [new THREE.Color('#884'), new THREE.Color('#f84'), new THREE.Color('white')]
 const color2 = new THREE.Color('#a66')
@@ -303,7 +303,7 @@ function add(time: number) {
   const pt = peakTime(60, 0.5) * (1 - 0.1 * Math.random())
   const stop = starStops(singleDir, singleAttr, bulletBaseParams, null, pt)[0]
 
-  const bullet = new ParticleTailStar(singleDir, 64, { base: bulletBaseParams, stop: { time: pt }, particle: particleTailParams, color: new THREE.Color(0.1,0.1,0.1), size: 0.2 })
+  const bullet = new ParticleTailStar(singleDir, 256, { base: bulletBaseParams, stop: { time: pt }, particle: particleTailParams, color: new THREE.Color(0.02,0.02,0.02), size: 0.1 })
   fireworks.add({ star: bullet, startTime: time })
 
   if (Math.random() < 0.2) fireworks.schedule(time, () => playPyu(...stop.p))
@@ -321,10 +321,10 @@ function add(time: number) {
   }
 
   const cstar = new CurveStar(direction, { base: baseParams, bee: beeParams, stop: stopParams, widthStart: 0.5, color: color1, widthEnd: 0.1, curveFriction: particleTailParams.friction, curveDelay: 0.4 })
-  const pstar = new PointStar(direction, { base: baseParams, bee: beeParams, stop: stopParams, color: color1, size: 0.8 })
-  const pstar2 = new PointStar(direction, { base: { ...baseParams, friction: 1, burnRateRandomness: 0.1, speedRandomness: 0, frictionRandomness: 0, speed: 30, duration: 2 }, color: color3, lastFlash: { duration: 0.4, color: new THREE.Color('white'), size: 0.2 }, size: 0.8 })
+  const pstar = new PointStar(direction, { base: baseParams, bee: beeParams, stop: stopParams, color: color1, size: 0.4 })
+  const pstar2 = new PointStar(direction, { base: { ...baseParams, friction: 1, burnRateRandomness: 0.1, speedRandomness: 0, frictionRandomness: 0, speed: 30, duration: 2 }, color: color3, lastFlash: { duration: 0.6, color: new THREE.Color('white'), size: 0.2 }, size: 0.4 })
   const tstar = new ParticleTailStar(direction, 64, { base: baseParams, bee: beeParams, stop: stopParams, particle: particleTailParams, size: 0.2, color: color2 })
-  const sstar = new ParticleSplashStar(direction, 64, { base: baseParams, bee: beeParams, stop: stopParams, particle: particleSplashParams, size: 0.2, color: color3 })
+  const sstar = new ParticleSplashStar(direction, 64, { base: baseParams, bee: beeParams, stop: stopParams, particle: particleSplashParams, size: 0.12, color: color3 })
   fireworks.add({ star: cstar, startTime: time + pt })
   fireworks.add({ star: pstar, startTime: time + pt })
   fireworks.add({ star: pstar2, startTime: time + pt })
