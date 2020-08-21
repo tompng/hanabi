@@ -165,8 +165,8 @@ function createPyuSound() {
 
 function createBangSound() {
   const wave = createPeriodicBang(44100 * 3)
-  const a = normalizeWave(waveScale(wave, 44100 * 3, i => Math.min(Math.exp(-i / 10000))))
-  const b = normalizeWave(wavePickScale(wave, 44100 * 3, i => i / 8, i => Math.min(i / 8000, Math.exp(-i / 20000))))
+  const a = normalizeWave(waveScale(wave, 44100 * 4, i => Math.min(Math.exp(-i / 10000))))
+  const b = normalizeWave(wavePickScale(wave, 44100 * 4, i => i / 8, i => Math.min(i / 8000, Math.exp(-i / 24000))))
   return a.map((v, i) => v + b[i])
 }
 
@@ -231,5 +231,5 @@ export function playPyu(x: number, y: number, z: number) {
 }
 
 export function playBang(x: number, y: number, z: number) {
-  playBuffer(sample(bangSounds)!, 0.5, { x, y, z }, 0.2)
+  playBuffer(sample(bangSounds)!, 0.5, { x, y, z }, 0.3)
 }
