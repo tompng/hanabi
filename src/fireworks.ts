@@ -43,11 +43,12 @@ function diskDirection(n: number, rmin: number, rmax: number): Direction {
 }
 function clusterDirection(direction: Direction, n: number, r: number) {
   const out: Direction = []
-  direction.forEach(([x, y, z]) => {
-    const r = Math.hypot(x, y, z)
+  direction.forEach(([bx, by, bz]) => {
     for (let i = 0; i < n; i++) {
       const [dx, dy, dz] = sphereRandom()
-      out.push([x + r * dx, y + r * dy, z + r * dz])
+      let x = bx + r * dx, y = by + r * dy, z = bz + r * dz
+      const rr = Math.hypot(x, y, z)
+      out.push([x / rr, y / rr, z / rr])
     }
   })
   return out
@@ -95,6 +96,14 @@ const clusterDirections: Direction[][] = [
   })
   return ds
 })
+
+const clusterDirections2 = [
+  clusterDirection(polyhedron4, 24, 0.2),
+  clusterDirection(polyhedron6, 20, 0.18),
+  clusterDirection(polyhedron8, 16, 0.14),
+  clusterDirection(polyhedron12, 10, 0.12),
+  clusterDirection(polyhedron20, 6, 0.1),
+]
 
 const diskDirections: Direction[] = []
 
@@ -277,7 +286,9 @@ export function addHanabi(fireworks: Fireworks, sound: Record<'bang' | 'pyu', (.
   fireworks.add({ star: bullet, startTime: time })
   if (Math.random() < 0.2) sound.pyu(...bstop.p)
   fireworks.schedule(time + pt, () => sound.bang(...bstop.p))
-  if (Math.random() < 0.5) {
+  if (Math.random() < 0.1) {
+    addTypeSub(fireworks, time + pt, bstop.p, bstop.v)
+  } else if (Math.random() < 0.4) {
     addTypeD(fireworks, time + pt, bstop.p, bstop.v)
   } else {
     addType1(fireworks, time + pt, bstop.p, bstop.v)
@@ -286,11 +297,13 @@ export function addHanabi(fireworks: Fireworks, sound: Record<'bang' | 'pyu', (.
 
 function addType1(fireworks: Fireworks, time: number, position: N3D, velocity: N3D) {
   const bee = Math.random() < 0.2 ? beeParams : { ...beeParams, start: 2, speed: 8 * Math.random(), decayRandomness: 1, speedRandomness: 1 }
-  const direction = sphericalDirections[sample([6, 7])]
+  const rotation = Math.random() < 0.2 ? randomRotation() : undefined
+  const direction = rotation ? sample(clusterDirections2) : sphericalDirections[sample([6, 7])]
   const baseParams: ShaderBaseParams = {
     ...baseParamsWithoutPosition,
     center: new THREE.Vector3(...position),
     baseVelocity: new THREE.Vector3(...velocity),
+    rotation
   }
   const blink: ShaderBlinkParams | undefined = Math.random() < 0.5 ? { start: 1 + 0.5 * Math.random(), rate: 0.1, rateRandomness: 0.2 } : undefined
   const stop = Math.random() < 0.2 ? stopParams : undefined
@@ -307,12 +320,11 @@ function addType1(fireworks: Fireworks, time: number, position: N3D, velocity: N
 }
 
 function randomRotation() {
-  const [x, y, z] = sphereSurfaceRandom()
   const th1 = 2 * Math.PI * Math.random()
   const cos1 = Math.cos(th1), sin1 = Math.sin(th1)
   const m1 = new THREE.Matrix3()
   m1.set(cos1, sin1, 0, -sin1, cos1, 0, 0, 0, 1)
-  const th2 = Math.PI / 2 + Math.asin(z)
+  const th2 = Math.PI / 2 + Math.asin(2 * Math.random() - 1)
   const cos2 = Math.cos(th2), sin2 = Math.sin(th2)
   const m2 = new THREE.Matrix3()
   m2.set(cos2, 0, sin2, 0, 1, 0, -sin2, 0, cos2)
@@ -340,4 +352,44 @@ function addTypeD(fireworks: Fireworks, time: number, position: N3D, velocity: N
   if (Math.random() < 0.5) fireworks.add({ startTime: time, star: new PointStar(direction, { base: { ...baseParams, duration: blink ? 1.5 : 1, speed: 8, rotation: randomRotation() }, color: randomColor(), size: 0.3, blink, lastFlash }) })
   fireworks.add({ startTime: time, star: new ParticleTailStar(sample(diskDirections), 32, { base: { ...baseParams, speed: 17, rotation: randomRotation() }, particle: particleTailParams, color: randomColor(), blink: blink2, size: 0.1 }) })
   if (Math.random() < 0.5) fireworks.add({ startTime: time, star: new ParticleTailStar(sample(diskDirections), 32, { base: { ...baseParams, speed: 20, rotation: randomRotation() }, particle: particleTailParams, color: randomColor(), blink: blink2, size: 0.1 }) })
+}
+
+function addTypeSub(fireworks: Fireworks, time: number, position: N3D, velocity: N3D) {
+  const direction = sphericalDirections[sample([4,5,6])]
+  const attributes = generateStarBaseAttributes(direction.length)
+  const baseParams: ShaderBaseParams = {
+    ...baseParamsWithoutPosition,
+    center: new THREE.Vector3(...position),
+    speed: 20,
+    speedRandomness: 0.05,
+    duration: 1.5,
+    rotation: randomRotation(),
+    burnRateRandomness: 1,
+    baseVelocity: new THREE.Vector3(...velocity),
+  }
+  const stopTime = 0.5 + 0.2 * Math.random()
+  fireworks.add({ startTime: time, star: new PointStar(direction, { base: baseParams, stop: { time: stopTime }, color: new THREE.Color('#050505'), size: 0.2 })})
+  const stops = starStops(direction, attributes, baseParams, null, stopTime)
+  const color1 = randomColor()
+  const color2 = Math.random() < 0.5 ? color1 : randomColor()
+  const base = {
+    ...baseParamsWithoutPosition,
+    speed: 8,
+    speedRandomness: 0.05,
+    duration: 1,
+  }
+  const size = 0.1
+  stops.forEach(({ p, v, t }) => {
+    [color1, color2].forEach(color => {
+      fireworks.add({
+        startTime: time + t,
+        star: new ParticleTailStar(polyhedron20, 32, {
+          base: { ...base, center: new THREE.Vector3(...p), baseVelocity: new THREE.Vector3(...v), rotation: randomRotation() },
+          color,
+          particle: particleTailParams,
+          size
+        })
+      })
+    })
+  })
 }
