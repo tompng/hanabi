@@ -11,7 +11,7 @@ varying vec3 color;
 void main() {
   float burnRate = 1.0 + burnRateRandom * burnRateRandomness;
   float rate = particleDuration * (1.0 + particleDurationRandom * particleDurationRandomness);
-  if (time > duration * burnRate + rate) return;
+  if (time > duration * burnRate + rate) DISCARD;
   vec3 v0 = speed * direction * (1.0 + speedRandom * speedRandomness);
   #ifdef ROTATION
     v0 = rotationMatrix * v0;
@@ -21,9 +21,9 @@ void main() {
   float t2 = time + particlePhase * rate;
   float t = rate * floor(t2 / rate) - particlePhase * rate;
   t2 = time - t;
-  if (t < 0.0) return;
+  if (t < 0.0) DISCARD;
   #ifdef STOP
-    if (t > stopTime * burnRate) return;
+    if (t > stopTime * burnRate) DISCARD;
   #endif
   vec3 pv0 = velocityAt(v0, friction2, t) + particleDirection * particleSpeed * (1.0 + particleSpeedRandom * particleSpeedRandomness);
   float pfriction2 = particleFriction * (1.0 + particleFrictionRandom * particleFrictionRandomness);
@@ -46,7 +46,7 @@ void main() {
   #ifdef BLINK
     if (t > blinkStart * burnRate) {
       float tb = t2 / blinkRate / (1.0 + blinkRateRandom * blinkRateRandomness) - blinkPhase;
-      if (tb - floor(tb) < 0.5) return;
+      if (tb - floor(tb) < 0.5) DISCARD;
     }
   #endif
   #ifdef COLORS

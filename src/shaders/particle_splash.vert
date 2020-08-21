@@ -13,7 +13,7 @@ void main() {
   float pduration = particleDuration * (1.0 + particleDurationRandom * particleDurationRandomness);
   float stime = stopTime * burnRate;
   float t2 = time - stime;
-  if (t2 < 0.0 || pduration < t2) return;
+  if (t2 < 0.0 || pduration < t2) DISCARD;
   vec3 v0 = speed * direction * (1.0 + speedRandom * speedRandomness);
   #ifdef ROTATION
     v0 = rotationMatrix * v0;
@@ -42,7 +42,7 @@ void main() {
   #ifdef BLINK
     if (time > blinkStart * burnRate) {
       float t = t2 / blinkRate / (1.0 + blinkRateRandom * blinkRateRandomness) - blinkPhase;
-      if (t - floor(t) < 0.5) return;
+      if (t - floor(t) < 0.5) DISCARD;
     }
   #endif
   #ifdef COLORS

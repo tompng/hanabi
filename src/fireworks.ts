@@ -176,7 +176,7 @@ function bulletParameters(x: number, y: number, dx: number, dy: number, z: numbe
 }
 
 const colors = [
-  [new THREE.Color('#884'), new THREE.Color('#842'), new THREE.Color('444')],
+  [new THREE.Color('#884'), new THREE.Color('#842'), new THREE.Color('#444')],
   new THREE.Color('#844'),
   [new THREE.Color('#444'), new THREE.Color('#844')]
 ]
@@ -288,7 +288,7 @@ export function addHanabi(fireworks: Fireworks, sound: Record<'bang' | 'pyu', (.
   fireworks.schedule(time + pt, () => sound.bang(...bstop.p))
   if (Math.random() < 0.1) {
     addTypeSub(fireworks, time + pt, bstop.p, bstop.v)
-  } else if (Math.random() < 0.4) {
+  } else if (Math.random() < 0.2) {
     addTypeD(fireworks, time + pt, bstop.p, bstop.v)
   } else {
     addType1(fireworks, time + pt, bstop.p, bstop.v)

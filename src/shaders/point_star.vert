@@ -16,9 +16,9 @@ varying vec3 lfcolor;
 
 void main() {
   float burnRate = 1.0 + burnRateRandom * burnRateRandomness;
-  if (time > duration * burnRate) return;
+  if (time > duration * burnRate) DISCARD;
   #ifdef STOP
-    if (time > stopTime * burnRate) return;
+    if (time > stopTime * burnRate) DISCARD;
   #endif
   vec3 v0 = speed * direction * (1.0 + speedRandom * speedRandomness);
   #ifdef ROTATION
@@ -54,7 +54,7 @@ void main() {
   #ifdef BLINK
     if (time > blinkStart * burnRate) {
       float t = time / blinkRate / (1.0 + blinkRateRandom * blinkRateRandomness) - blinkPhase;
-      if (t - floor(t) < 0.5) return;
+      if (t - floor(t) < 0.5) DISCARD;
     }
   #endif
   #ifdef COLORS

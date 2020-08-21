@@ -1,3 +1,4 @@
+#define DISCARD { gl_Position = vec4(0,0,-2,1); return; }
 const float pi = 3.14159265358979323846;
 const vec3 wind = vec3(1, 0, 0);
 const vec3 gravity = vec3(0, 0, -9.8);
