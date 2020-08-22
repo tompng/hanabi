@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <g transform="translate(32,32) rotate(0)"><ellipse cx="18" cy="0" rx="4" ry="3" fill="#f82" /><circle cx="28" cy="0" r="4" fill="#fa6" /></g>
+  <g transform="translate(32,32) rotate(40)"><ellipse cx="18" cy="0" rx="4" ry="3" fill="#f82" /><circle cx="28" cy="0" r="4" fill="#fa6" /></g>
+  <g transform="translate(32,32) rotate(80)"><ellipse cx="18" cy="0" rx="4" ry="3" fill="#f82" /><circle cx="28" cy="0" r="4" fill="#fa6" /></g>
+  <g transform="translate(32,32) rotate(120)"><ellipse cx="18" cy="0" rx="4" ry="3" fill="#f82" /><circle cx="28" cy="0" r="4" fill="#fa6" /></g>
+  <g transform="translate(32,32) rotate(160)"><ellipse cx="18" cy="0" rx="4" ry="3" fill="#f82" /><circle cx="28" cy="0" r="4" fill="#fa6" /></g>
+  <g transform="translate(32,32) rotate(200)"><ellipse cx="18" cy="0" rx="4" ry="3" fill="#f82" /><circle cx="28" cy="0" r="4" fill="#fa6" /></g>
+  <g transform="translate(32,32) rotate(240)"><ellipse cx="18" cy="0" rx="4" ry="3" fill="#f82" /><circle cx="28" cy="0" r="4" fill="#fa6" /></g>
+  <g transform="translate(32,32) rotate(280)"><ellipse cx="18" cy="0" rx="4" ry="3" fill="#f82" /><circle cx="28" cy="0" r="4" fill="#fa6" /></g>
+  <g transform="translate(32,32) rotate(320)"><ellipse cx="18" cy="0" rx="4" ry="3" fill="#f82" /><circle cx="28" cy="0" r="4" fill="#fa6" /></g>
+</svg>
