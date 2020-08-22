@@ -204,7 +204,7 @@ function animate() {
   let time = new Date().getTime() / 1000
   if (capturing) {
     if (capturing.time) {
-      time = capturing.time + capturing.step / 100
+      time = capturing.time + capturing.step / 80
       capturing.step++
     } else {
       capturing.time = time
@@ -247,7 +247,7 @@ function animate() {
   }
   if (capturing) {
     capturing.capturer.add(render)
-    if (capturing.step === 10) {
+    if (capturing.step === 8) {
       const canvas = document.createElement('canvas')
       capturing.capturer.capture(canvas)
       const atag = document.querySelector<HTMLAnchorElement>('.pictures .p1 a')!
@@ -256,7 +256,7 @@ function animate() {
       atag.style.display = img.style.display = ''
 
     }
-    if (capturing.step === 100) {
+    if (capturing.step === 80) {
       const canvas = document.createElement('canvas')
       capturing.capturer.capture(canvas)
       const atag = document.querySelector<HTMLAnchorElement>('.pictures .p2 a')!
