@@ -1,7 +1,7 @@
 import * as THREE from 'three'
 import vertexShader from './shaders/water.vert'
 import fragmentShader from './shaders/water.frag'
-import waveUrl from '../wave.jpg'
+import waveUrl from './images/wave.jpg'
 
 const planeGeometry = new THREE.PlaneBufferGeometry()
 planeGeometry.boundingSphere = new THREE.Sphere(undefined, 1024)
