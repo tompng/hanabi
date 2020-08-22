@@ -220,7 +220,7 @@ function animate() {
   }
   if (Math.floor(timeWas / 0.1) < Math.floor(time / 0.1)) {
     const seed = Math.floor(time / 0.1)
-    if (((seed * 3331 + Math.floor(seed / 123) * 331) % 100) < 4) addHanabi(fireworks, { bang: playBang, pyu: playPyu }, time, seed)
+    if (((seed * 3331 + Math.floor(seed / 123) * 331) % 100) < 6) addHanabi(fireworks, { bang: playBang, pyu: playPyu }, time, seed)
   }
   timeWas = time
   fireworks.update(time, camera.pointPixels)
