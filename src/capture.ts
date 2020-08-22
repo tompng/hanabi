@@ -32,6 +32,14 @@ void main() {
 }
 `
 
+function isWebGL2Available() {
+  try {
+    var canvas = document.createElement('canvas')
+    return !!(window.WebGL2RenderingContext && canvas.getContext('webgl2'))
+  } catch (e) {
+    return false
+  }
+}
 export class Capturer {
   films: { n: number; target: THREE.WebGLRenderTarget }[] = []
   scene = new THREE.Scene()
@@ -57,7 +65,11 @@ export class Capturer {
       })
     )
     this.scene.add(plane)
-    this.input = new THREE.WebGLRenderTarget(width, height, renderTargetOption)
+    if (isWebGL2Available()) {
+      this.input = new THREE.WebGLMultisampleRenderTarget(width, height, renderTargetOption)
+    } else {
+      this.input = new THREE.WebGLRenderTarget(width, height, renderTargetOption)
+    }
     this.output = new THREE.WebGLRenderTarget(width, height, outputRenderTargetOption)
   }
   getNewFilm() {
