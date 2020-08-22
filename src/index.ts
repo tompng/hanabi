@@ -219,8 +219,9 @@ function animate() {
     setAudioListener(camera.listenerPosition())
   }
   if (Math.floor(timeWas / 0.1) < Math.floor(time / 0.1)) {
-    const seed = Math.floor(time / 0.1)
-    if (((seed * 3331 + Math.floor(seed / 123) * 331) % 100) < 6) addHanabi(fireworks, { bang: playBang, pyu: playPyu }, time, seed)
+    const n = Math.floor(time / 0.1) % 100000
+    const seed = n * 1313 % 5331 + n * 1751 % 3727 + n * 1891 % 2927 + n * 1973 % 2941
+    if (seed % 100 < 6) addHanabi(fireworks, { bang: playBang, pyu: playPyu }, time, seed)
   }
   timeWas = time
   fireworks.update(time, camera.pointPixels)
