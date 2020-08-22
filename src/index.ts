@@ -181,6 +181,8 @@ closeButton.onpointerdown = () => {
   capturing?.capturer.dispose()
   capturing = null
   document.body.classList.remove('picture-mode')
+  const images = document.querySelectorAll<HTMLImageElement>('.pictures img')!
+  images.forEach(img => { img.src = '' })
 }
 cameraButton.onpointerdown = () => {
   if (capturing) return
@@ -194,9 +196,6 @@ cameraButton.onpointerdown = () => {
   const img = document.querySelector<HTMLImageElement>('.pictures .p1 img')!
   const atag = document.querySelector<HTMLAnchorElement>('.pictures .p1 a')!
   atag.style.display = img.style.display = 'none'
-  img.src = ''
-  img.width = window.innerWidth
-  img.height = window.innerHeight
 }
 
 let timeWas = new Date().getTime() / 1000
