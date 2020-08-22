@@ -88,8 +88,10 @@ camera.verticalAngle = 0.2
 const move = { from: { x: camera.position.x, y: camera.position.y }, to: { x: camera.position.x, y: camera.position.y }, time: new Date() }
 const lscale = 256
 let currentPointerId: null | number = null
+const cameraSmoothMove = { h: 0, v: 0 }
 renderer.domElement.addEventListener('pointerdown', e => {
   currentPointerId = e.pointerId
+  cameraSmoothMove.h = cameraSmoothMove.v = 0
   const startX = e.pageX
   const startY = e.pageY
   e.preventDefault()
@@ -97,7 +99,15 @@ renderer.domElement.addEventListener('pointerdown', e => {
   const startVAngle = camera.verticalAngle
   let maxMove = 0
   const time = new Date()
+  let last = { x: startX, y: startY, t: performance.now() }
+  let prev = { ...last }
   function pointermove(e: PointerEvent) {
+    if (last.x == e.pageX && last.y == e.pageY) {
+      last.t = performance.now()
+    } else {
+      prev = last
+      last = { x: e.pageX, y: e.pageY, t: performance.now() }
+    }
     e.preventDefault()
     if (e.pointerId !== currentPointerId) return
     const dx = e.pageX - startX
@@ -106,13 +116,19 @@ renderer.domElement.addEventListener('pointerdown', e => {
     if (maxMove < 4) return
     const scale = camera.fov / renderer.domElement.offsetHeight * Math.PI / 180
     camera.horizontalAngle = startHAngle + dx * scale
-    camera.verticalAngle = Math.min(Math.max(-Math.PI / 3, startVAngle + dy * scale), Math.PI / 3)
+    camera.verticalAngle = startVAngle + dy * scale
   }
   function pointerup(e: PointerEvent) {
     window.removeEventListener('pointermove', pointermove)
     window.removeEventListener('pointerup', pointerup)
     if (e.pointerId !== currentPointerId) return
-    if (maxMove >= 4 || new Date().getTime() - time.getTime() > 500) return
+    if (maxMove >= 4 || new Date().getTime() - time.getTime() > 500) {
+      const scale = camera.fov / renderer.domElement.offsetHeight * Math.PI / 180
+      const dt = Math.max(last.t - prev.t, 10) / 1000
+      cameraSmoothMove.h = (last.x - prev.x) * scale / dt
+      cameraSmoothMove.v = (last.y - prev.y) * scale / dt
+      return
+    }
     const el = renderer.domElement
     const rx = (e.pageX - el.offsetLeft) / el.offsetWidth
     const ry = (e.pageY - el.offsetTop) / el.offsetHeight
@@ -208,12 +224,20 @@ function animate() {
     } else {
       capturing.time = time
     }
+    cameraSmoothMove.h = cameraSmoothMove.v = 0
   } else {
     let mt = Math.min(Math.max(0, (time - move.time.getTime() / 1000) / 2), 1)
     mt = mt * mt * (3 - 2 * mt)
     camera.position.x = move.from.x * (1 - mt) + mt * move.to.x
     camera.position.y = move.from.y * (1 - mt) + mt * move.to.y
     camera.position.z = Math.max(0, lscale * land.maxZAt(camera.position.x / lscale, camera.position.y / lscale)) + 1
+    const dt = Math.max(time - timeWas, 0)
+    const k = 8
+    const e = Math.exp(-k * dt)
+    camera.horizontalAngle += cameraSmoothMove.h * (1 - e) / k
+    camera.verticalAngle += cameraSmoothMove.v * (1 - e) / k
+    cameraSmoothMove.h *= e
+    cameraSmoothMove.v *= e
     camera.update()
     setAudioListener(camera.listenerPosition())
   }

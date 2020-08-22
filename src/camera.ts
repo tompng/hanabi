@@ -11,6 +11,7 @@ export class Camera {
     this.update()
   }
   update() {
+    this.verticalAngle = Math.min(Math.max(-Math.PI / 4, this.verticalAngle), Math.PI / 3)
     this.aspect = this.width / this.height
     this.mainCamera.fov = this.fov
     const fovtan = Math.min(0.75, 0.9 * this.height / this.width)
