@@ -174,55 +174,55 @@ window.addEventListener('orientationchange', resized)
 window.addEventListener('resize', resized)
 doResize()
 
-let capturer: Capturer | null = null
-let captureCanvases = [...new Array(4)].map(() => document.createElement('canvas'))
-const button = document.createElement('button')
-button.textContent = 'capture'
-document.body.appendChild(button)
-button.onclick = () => {
-  if (capturer) return
-  capturer = new Capturer(renderer, window.innerWidth, window.innerHeight)
-  captureCanvases.forEach((c, i) => {
-    c.style.cssText = `position:fixed;top:0;`
-    c.style.left = (i % 2 * 50) + '%'
-    c.style.top = (Math.floor(i / 2) * 50) + '%'
-    document.body.appendChild(c)
-    c.style.width = innerWidth / 2 + 'px'
-    c.style.height = innerHeight / 2 + 'px'
+let capturing: { capturer: Capturer, time: number | null, step: number } | null = null
+let captureCanvases = document.querySelectorAll<HTMLCanvasElement>('.picture canvas')
+const cameraButton = document.querySelector<HTMLElement>('.camera')!
+const closeButton = document.querySelector<HTMLElement>('.close')!
+closeButton.onpointerdown = () => {
+  capturing?.capturer.dispose()
+  capturing = null
+  document.body.classList.remove('picture-mode')
+}
+cameraButton.onpointerdown = () => {
+  if (capturing) return
+  capturing = {
+    capturer: new Capturer(renderer, window.innerWidth, window.innerHeight),
+    time: null,
+    step: 0
+  }
+  document.body.classList.add('picture-mode')
+  document.querySelector<HTMLElement>('.pictures .p2')!.style.display = 'none'
+  captureCanvases.forEach(c => {
+    c.width = window.innerWidth
+    c.height = window.innerHeight
     c.getContext('2d')?.clearRect(0, 0, c.width, c.height)
   })
-  let n = 0
-  const timer = setInterval(() => {
-    n++
-    const msecs = [100, 1000, 2000, 4000]
-    const i = msecs.findIndex(v => n == (v / 100))
-    if (i === -1) return
-    capturer?.capture(captureCanvases[i], 1)
-    if (i === 3) {
-      clearInterval(timer)
-      capturer?.dispose()
-      capturer = null
-    }
-  }, 100)
 }
 
 let timeWas = new Date().getTime() / 1000
 function animate() {
-  const time = new Date().getTime() / 1000
-  let mt = Math.min(Math.max(0, (time - move.time.getTime() / 1000) / 2), 1)
-  mt = mt * mt * (3 - 2 * mt)
-  camera.position.x = move.from.x * (1 - mt) + mt * move.to.x
-  camera.position.y = move.from.y * (1 - mt) + mt * move.to.y
-  camera.position.z = Math.max(0, lscale * land.maxZAt(camera.position.x / lscale, camera.position.y / lscale)) + 1
-
-  camera.update()
-  setAudioListener(camera.listenerPosition())
-  if (Math.floor(timeWas / 0.1) !== Math.floor(time / 0.1)) {
+  let time = new Date().getTime() / 1000
+  if (capturing) {
+    if (capturing.time) {
+      time = capturing.time + capturing.step / 100
+      capturing.step++
+    } else {
+      capturing.time = time
+    }
+  } else {
+    let mt = Math.min(Math.max(0, (time - move.time.getTime() / 1000) / 2), 1)
+    mt = mt * mt * (3 - 2 * mt)
+    camera.position.x = move.from.x * (1 - mt) + mt * move.to.x
+    camera.position.y = move.from.y * (1 - mt) + mt * move.to.y
+    camera.position.z = Math.max(0, lscale * land.maxZAt(camera.position.x / lscale, camera.position.y / lscale)) + 1
+    camera.update()
+    setAudioListener(camera.listenerPosition())
+  }
+  if (Math.floor(timeWas / 0.1) < Math.floor(time / 0.1)) {
     const seed = Math.floor(time / 0.1)
     if (((seed * 3331 + Math.floor(seed / 123) * 331) % 100) < 4) addHanabi(fireworks, { bang: playBang, pyu: playPyu }, time, seed)
   }
   timeWas = time
-
   fireworks.update(time, camera.pointPixels)
   const brightness = fireworks.brightness()
   const ll = 0.0002
@@ -245,13 +245,30 @@ function animate() {
     renderer.render(waterScene, camera.mainCamera)
     renderer.render(scene, camera.mainCamera)
   }
-  if (capturer) {
-    capturer.add(render)
-    capturer.copy(capturer.input.texture, null)
+  if (capturing) {
+    capturing.capturer.add(render)
+    if (capturing.step == 10) {
+      const canvas = captureCanvases[0]
+      capturing.capturer.capture(canvas)
+      const atag = document.querySelector<HTMLAnchorElement>('.pictures .p1 a')!
+      atag.href = canvas.toDataURL()
+    }
+    if (capturing.step === 100) {
+      const canvas = captureCanvases[1]
+      capturing.capturer.capture(canvas)
+      const atag = document.querySelector<HTMLAnchorElement>('.pictures .p2 a')!
+      atag.href = canvas.toDataURL()
+      atag.parentElement!.style.display = ''
+      capturing.capturer.dispose()
+      capturing = null
+      requestAnimationFrame(animate)
+    } else {
+      setTimeout(animate, 0)
+    }
   } else {
     render()
+    requestAnimationFrame(animate)
   }
-  requestAnimationFrame(animate)
 }
 
 animate()
