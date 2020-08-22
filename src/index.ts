@@ -175,7 +175,6 @@ window.addEventListener('resize', resized)
 doResize()
 
 let capturing: { capturer: Capturer, time: number | null, step: number } | null = null
-let captureCanvases = document.querySelectorAll<HTMLCanvasElement>('.picture canvas')
 const cameraButton = document.querySelector<HTMLElement>('.camera')!
 const closeButton = document.querySelector<HTMLElement>('.close')!
 closeButton.onpointerdown = () => {
@@ -192,11 +191,12 @@ cameraButton.onpointerdown = () => {
   }
   document.body.classList.add('picture-mode')
   document.querySelector<HTMLElement>('.pictures .p2')!.style.display = 'none'
-  captureCanvases.forEach(c => {
-    c.width = window.innerWidth
-    c.height = window.innerHeight
-    c.getContext('2d')?.clearRect(0, 0, c.width, c.height)
-  })
+  const img = document.querySelector<HTMLImageElement>('.pictures .p1 img')!
+  const atag = document.querySelector<HTMLAnchorElement>('.pictures .p1 a')!
+  atag.style.display = img.style.display = 'none'
+  img.src = ''
+  img.width = window.innerWidth
+  img.height = window.innerHeight
 }
 
 let timeWas = new Date().getTime() / 1000
@@ -247,17 +247,21 @@ function animate() {
   }
   if (capturing) {
     capturing.capturer.add(render)
-    if (capturing.step == 10) {
-      const canvas = captureCanvases[0]
+    if (capturing.step === 10) {
+      const canvas = document.createElement('canvas')
       capturing.capturer.capture(canvas)
       const atag = document.querySelector<HTMLAnchorElement>('.pictures .p1 a')!
-      atag.href = canvas.toDataURL()
+      const img = document.querySelector<HTMLImageElement>('.pictures .p1 img')!
+      img.src = atag.href = canvas.toDataURL()
+      atag.style.display = img.style.display = ''
+
     }
     if (capturing.step === 100) {
-      const canvas = captureCanvases[1]
+      const canvas = document.createElement('canvas')
       capturing.capturer.capture(canvas)
       const atag = document.querySelector<HTMLAnchorElement>('.pictures .p2 a')!
-      atag.href = canvas.toDataURL()
+      const img = document.querySelector<HTMLImageElement>('.pictures .p2 img')!
+      img.src = atag.href = canvas.toDataURL()
       atag.parentElement!.style.display = ''
       capturing.capturer.dispose()
       capturing = null
